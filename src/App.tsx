@@ -5,6 +5,7 @@ import ClaimsPage from '@/pages/ClaimsPage';
 import TypeAPage from '@/pages/TypeAPage';
 import TypeBPage from '@/pages/TypeBPage';
 import TypeCPage from '@/pages/TypeCPage';
+import EstimationPage from '@/pages/EstimationPage';
 import ApprovePage from '@/pages/ApprovePage';
 import OpinionPage from '@/pages/OpinionPage';
 
@@ -23,9 +24,4 @@ export default function App() {
       </Route>
     </Routes>
   );
-}
-
-// Placeholder for estimation page (not yet built)
-function EstimationPage() {
-  return <div className="text-secondary">수량 내역서 페이지 (구현 예정)</div>;
 }
