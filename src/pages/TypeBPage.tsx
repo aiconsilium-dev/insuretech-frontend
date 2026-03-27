@@ -66,7 +66,7 @@ export default function TypeBPage() {
       </div>
 
       {/* 2-column detail */}
-      <div className="grid grid-cols-2 gap-[14px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-[14px]">
         {/* Left */}
         <div className="flex flex-col gap-[14px]">
           {/* AI Classification */}

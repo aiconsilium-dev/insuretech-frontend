@@ -74,7 +74,7 @@ export default function TypeAPage() {
       <StageTracker title="단지 하자소송 진행 단계 — 마포래미안" stages={d.stages} />
 
       {/* 2-column detail */}
-      <div className="grid grid-cols-2 gap-[14px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-[14px]">
         {/* Left */}
         <div className="flex flex-col gap-[14px]">
           {/* Evidence Photos */}

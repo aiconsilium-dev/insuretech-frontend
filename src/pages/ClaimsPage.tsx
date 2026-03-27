@@ -179,7 +179,7 @@ export default function ClaimsPage() {
           </div>
 
           {/* Table Header */}
-          <div className="grid grid-cols-[90px_1fr_80px_80px_120px_90px] px-4 py-2 bg-border-light text-[10px] font-bold text-secondary uppercase tracking-[0.4px] shrink-0 border-b border-border">
+          <div className="hidden md:grid grid-cols-[90px_1fr_80px_80px_120px_90px] px-4 py-2 bg-border-light text-[10px] font-bold text-secondary uppercase tracking-[0.4px] shrink-0 border-b border-border">
             <span>청구번호</span>
             <span>단지·내용</span>
             <span>접수일</span>
@@ -204,7 +204,7 @@ export default function ClaimsPage() {
                   key={claim.id}
                   onClick={() => setSelectedClaim(claim)}
                   className={clsx(
-                    'grid grid-cols-[90px_1fr_80px_80px_120px_90px] py-[11px] px-4 border-b border-border cursor-pointer items-center transition-colors hover:bg-[#F8F9FF] border-l-[3px]',
+                    'grid grid-cols-[1fr_90px] md:grid-cols-[90px_1fr_80px_80px_120px_90px] py-[11px] px-4 border-b border-border cursor-pointer items-center transition-colors hover:bg-[#F8F9FF] border-l-[3px]',
                     claim.highlighted
                       ? 'bg-amber-light border-l-red'
                       : claim.dimmed
@@ -214,19 +214,20 @@ export default function ClaimsPage() {
                     selectedClaim?.id === claim.id && !claim.highlighted && 'bg-primary-light',
                   )}
                 >
-                  <div className="text-[11px] text-secondary">{claim.id}</div>
+                  <div className="hidden md:block text-[11px] text-secondary">{claim.id}</div>
                   <div>
                     <div className="text-[13px] font-semibold">{claim.complex}</div>
                     <div className="text-[11px] text-secondary">{claim.description}</div>
+                    <div className="md:hidden text-[11px] text-secondary mt-[2px]">{claim.id} · {claim.date.slice(5).replace('-', '/')}</div>
                   </div>
-                  <div className="text-[12px] text-secondary">{claim.date.slice(5).replace('-', '/')}</div>
+                  <div className="hidden md:block text-[12px] text-secondary">{claim.date.slice(5).replace('-', '/')}</div>
                   <div className={clsx(
-                    'text-[13px] font-bold',
+                    'hidden md:block text-[13px] font-bold',
                     claim.confidence >= 0.9 ? 'text-green' : 'text-amber',
                   )}>
                     {(claim.confidence * 100).toFixed(1)}%
                   </div>
-                  <div>
+                  <div className="hidden md:block">
                     <StatusPill variant={statusVariantMap[claim.status] ?? 'done'}>
                       {claim.statusLabel}
                     </StatusPill>
@@ -259,8 +260,8 @@ export default function ClaimsPage() {
           </div>
         </div>
 
-        {/* Right: Preview Panel */}
-        <div className="w-[300px] shrink-0 bg-card rounded-card border border-border overflow-hidden flex flex-col transition-all">
+        {/* Right: Preview Panel (hidden on tablet/mobile) */}
+        <div className="hidden xl:flex w-[300px] shrink-0 bg-card rounded-card border border-border overflow-hidden flex-col transition-all">
           {preview ? (
             <>
               {/* Preview Header */}

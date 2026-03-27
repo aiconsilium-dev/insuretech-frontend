@@ -50,38 +50,40 @@
   --shadow-subtle: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-html, body {
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--color-bg);
-  color: var(--color-txt);
-  -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
+@layer base {
+  html, body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--color-bg);
+    color: var(--color-txt);
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-:root {
-  --p: #4F46E5;
-  --pl: #EEF2FF;
-  --p2: #6366F1;
-  --bg: #F8FAFC;
-  --card: #FFFFFF;
-  --t: #0F172A;
-  --s: #64748B;
-  --b: #E2E8F0;
-  --b2: #F1F5F9;
-  --green: #059669;
-  --gl: #ECFDF5;
-  --red: #DC2626;
-  --rl: #FEF2F2;
-  --amber: #D97706;
-  --al: #FFFBEB;
-  --navy: #0F172A;
+  :root {
+    --p: #4F46E5;
+    --pl: #EEF2FF;
+    --p2: #6366F1;
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --t: #0F172A;
+    --s: #64748B;
+    --b: #E2E8F0;
+    --b2: #F1F5F9;
+    --green: #059669;
+    --gl: #ECFDF5;
+    --red: #DC2626;
+    --rl: #FEF2F2;
+    --amber: #D97706;
+    --al: #FFFBEB;
+    --navy: #0F172A;
+  }
 }

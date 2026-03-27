@@ -99,7 +99,7 @@ export default function DashboardPage() {
       <div className="text-[13px] text-secondary mb-[18px]">2026년 3월 · 전체 단지 기준</div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-4 gap-3 mb-[18px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-[18px]">
         {kpiData.map((kpi) => (
           <KPICard
             key={kpi.variant}
@@ -110,7 +110,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2-column layout */}
-      <div className="grid gap-[14px]" style={{ gridTemplateColumns: '1fr 300px' }}>
+      <div className="grid gap-[14px] grid-cols-1 xl:grid-cols-[1fr_300px]">
         {/* Left: Recent Claims Table */}
         <DataTable<Claim>
           title="최근 청구 내역"
