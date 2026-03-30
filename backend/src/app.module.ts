@@ -1,64 +1,42 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import {
-  User,
-  Complex,
-  Policy,
-  Claim,
-  ClaimPhoto,
-  ClaimAiReason,
-  ClaimPrecedent,
-  ClaimEvent,
-  TypeADetail,
-  TypeBDetail,
-  Estimation,
-  EstimationItem,
-  Document,
-  Approval,
-} from './entities';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { DatabaseModule } from './database/database.module';
+import { UsersModule } from './users/users.module';
+import { ComplexesModule } from './complexes/complexes.module';
+import { PoliciesModule } from './policies/policies.module';
+import { ClaimsModule } from './claims/claims.module';
+import { DocumentsModule } from './documents/documents.module';
+import { ApprovalsModule } from './approvals/approvals.module';
+import { EstimationsModule } from './estimations/estimations.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: `.env.${process.env.NODE_ENV || 'local'}`,
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 5432),
-        username: configService.get<string>('DB_USERNAME', 'user'),
-        password: configService.get<string>('DB_PASSWORD', 'password'),
-        database: configService.get<string>('DB_DATABASE', 'insuretech'),
-        entities: [
-          User,
-          Complex,
-          Policy,
-          Claim,
-          ClaimPhoto,
-          ClaimAiReason,
-          ClaimPrecedent,
-          ClaimEvent,
-          TypeADetail,
-          TypeBDetail,
-          Estimation,
-          EstimationItem,
-          Document,
-          Approval,
-        ],
-        migrations: [__dirname + '/migrations/*.{ts,js}'],
-        synchronize: false,
-        logging: configService.get<string>('NODE_ENV') === 'development',
-      }),
-      inject: [ConfigService],
-    }),
+    DatabaseModule,
+    AuthModule,
+    UsersModule,
+    ComplexesModule,
+    PoliciesModule,
+    ClaimsModule,
+    DocumentsModule,
+    ApprovalsModule,
+    EstimationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

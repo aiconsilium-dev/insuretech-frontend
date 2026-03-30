@@ -1,11 +1,11 @@
-import 'reflect-metadata';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV || 'local'}` });
 
-const options: DataSourceOptions = {
+export const options: DataSourceOptions = {
   type: 'postgres',
   host: process.env.DATABASE_HOST ?? 'localhost',
   port: parseInt(process.env.DATABASE_PORT ?? '5432', 10),
@@ -13,9 +13,9 @@ const options: DataSourceOptions = {
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
   synchronize: false,
-  logging: process.env.NODE_ENV === 'local',
-  entities: ['dist/**/*.entity.js'],
-  migrations: ['dist/migrations/*.js'],
+  logging: false, // Keep seeding quiet
+  entities: [path.join(__dirname, '/../**/*.entity{.ts,.js}')],
+  migrations: [path.join(__dirname, '/migrations/*{.ts,.js}')],
   namingStrategy: new SnakeNamingStrategy(),
 };
 
