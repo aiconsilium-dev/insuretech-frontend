@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 interface AuthState {
   accessToken: string | null;
@@ -7,13 +6,18 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      accessToken: null,
-      setAccessToken: (token) => set({ accessToken: token }),
-      logout: () => set({ accessToken: null }),
-    }),
-    { name: 'auth-storage' },
-  ),
-);
+// localStorage에서 초기값 복원
+const stored = localStorage.getItem('auth-storage');
+const initial = stored ? (JSON.parse(stored) as { state?: { accessToken?: string } }) : null;
+
+export const useAuthStore = create<AuthState>((set) => ({
+  accessToken: initial?.state?.accessToken ?? null,
+  setAccessToken: (token: string) => {
+    set({ accessToken: token });
+    localStorage.setItem('auth-storage', JSON.stringify({ state: { accessToken: token } }));
+  },
+  logout: () => {
+    set({ accessToken: null });
+    localStorage.removeItem('auth-storage');
+  },
+}));
