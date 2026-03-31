@@ -30,6 +30,7 @@ export class AuthController {
     return new ApiResponseDto(true, 'Login successful', data);
   }
 
+  @Public()
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @ApiBearerAuth()
@@ -47,6 +48,7 @@ export class AuthController {
     return new ApiResponseDto(true, 'Token refreshed successfully', data);
   }
 
+  @Public()
   @UseGuards(JwtRefreshGuard)
   @Post('logout')
   @ApiBearerAuth()

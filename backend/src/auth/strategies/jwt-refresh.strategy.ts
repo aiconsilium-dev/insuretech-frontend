@@ -21,6 +21,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
     const token = req.get('Authorization');
     if (!token) throw new Error('Authorization header not found');
     const refreshToken = token.replace('Bearer', '').trim();
-    return { ...payload, refreshToken };
+    // Map `sub` → `id` so that downstream code can use `user.id` consistently
+    return { id: payload.sub, refreshToken };
   }
 }

@@ -19,7 +19,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'local'}`,
+      envFilePath: [`.env.${process.env.NODE_ENV || 'local'}`, '.env'],
     }),
     DatabaseModule,
     AuthModule,
