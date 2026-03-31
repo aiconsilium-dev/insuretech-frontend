@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Req, Ip } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, Ip, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -41,20 +41,21 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<ApiResponseDto<TokenDto>> {
     const token = req.get('Authorization');
-    if (!token) throw new Error('Authorization header not found');
+    if (!token) throw new UnauthorizedException('Authorization header not found');
     const refreshToken = token.replace('Bearer', '').trim();
     const data = await this.authService.refreshToken(user, refreshToken);
     return new ApiResponseDto(true, 'Token refreshed successfully', data);
   }
 
+  @UseGuards(JwtRefreshGuard)
   @Post('logout')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'User logout' })
-  @ApiResponse({ status: 200, description: 'Logout successful.' })
+  @ApiOperation({ summary: 'User logout — pass the refresh token as Bearer' })
+  @ApiResponse({ status: 201, description: 'Logout successful.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async logout(@Req() req: Request): Promise<ApiResponseDto<null>> {
     const token = req.get('Authorization');
-    if (!token) throw new Error('Authorization header not found');
+    if (!token) throw new UnauthorizedException('Authorization header not found');
     const refreshToken = token.replace('Bearer', '').trim();
     await this.authService.logout(refreshToken);
     return new ApiResponseDto(true, 'Logout successful');

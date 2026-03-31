@@ -3,10 +3,14 @@ import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Validation
   app.useGlobalPipes(
@@ -54,7 +58,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-doc', app, document);
 
-  const port = configService.get<number>('PORT', 3000);
+  const port = configService.get<number>('PORT', 8080);
   await app.listen(port);
 }
 bootstrap();

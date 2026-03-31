@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '@/users/users.service';
@@ -101,11 +101,10 @@ export class AuthService {
   }
 
   private async updateLastLogin(userId: string): Promise<void> {
-      const user = await this.usersService.findById(userId);
-      if(user) {
-          user.lastLoginAt = new Date();
-          await this.refreshTokenRepository.query(`UPDATE users SET last_login_at = $1 WHERE id = $2`, [new Date(), userId]);
-      }
+    await this.refreshTokenRepository.query(
+      `UPDATE users SET last_login_at = $1 WHERE id = $2`,
+      [new Date(), userId],
+    );
   }
 
   private parseExpiry(expiryString: string): number {

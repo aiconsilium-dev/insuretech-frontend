@@ -7,11 +7,11 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV || 'local'}` });
 
 const options: DataSourceOptions = {
   type: 'postgres',
-  host: process.env.DATABASE_HOST ?? 'localhost',
-  port: parseInt(process.env.DATABASE_PORT ?? '5432', 10),
-  username: process.env.DATABASE_USERNAME,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
+  host: process.env.DB_HOST ?? 'localhost',
+  port: parseInt(process.env.DB_PORT ?? '5432', 10),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
   synchronize: false,
   logging: process.env.NODE_ENV === 'local',
   entities: ['dist/**/*.entity.js'],

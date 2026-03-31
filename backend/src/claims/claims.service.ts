@@ -191,37 +191,28 @@ export class ClaimsService {
         .getRawOne();
       result.typeBDetail = typeBDetail ?? null;
     } else if (claim.type === ClaimType.C) {
-      const estimation = await this.estimationRepository
-        .createQueryBuilder('estimation')
-        .leftJoin('estimation.items', 'item')
-        .select([
-          'estimation.claimId',
-          'estimation.totalAmount',
-          'estimation.calcSeconds',
-          'estimation.vendorEstimate',
-          'estimation.depreciation',
-          'estimation.indirectRate',
-          'estimation.finalAmount',
-          'item.id',
-          'item.name',
-          'item.description',
-          'item.quantity',
-          'item.unit',
-          'item.standardSrc',
-          'item.subtotal',
-          'item.isSelected',
-          'item.sortOrder',
-        ])
-        .where('estimation.claimId = :id', { id })
-        .getOne();
-      result.estimation = estimation ?? null;
+      result.estimation = (await this.loadEstimation(id)) ?? null;
     }
 
     return result;
   }
 
   async findEstimation(claimId: string) {
-    const estimation = await this.estimationRepository
+    const estimation = await this.loadEstimation(claimId);
+
+    if (!estimation) {
+      throw new NotFoundException(`Estimation for claim ${claimId} not found`);
+    }
+
+    return estimation;
+  }
+
+  /**
+   * Shared helper — loads estimation + items for a given claimId.
+   * Returns null if not found (callers decide whether to throw).
+   */
+  private async loadEstimation(claimId: string) {
+    return this.estimationRepository
       .createQueryBuilder('estimation')
       .leftJoin('estimation.items', 'item')
       .select([
@@ -244,12 +235,6 @@ export class ClaimsService {
       ])
       .where('estimation.claimId = :claimId', { claimId })
       .getOne();
-
-    if (!estimation) {
-      throw new NotFoundException(`Estimation for claim ${claimId} not found`);
-    }
-
-    return estimation;
   }
 
   async updateEstimationItem(claimId: string, itemId: number, dto: UpdateEstimationItemDto) {

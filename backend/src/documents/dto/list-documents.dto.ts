@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { DocType } from '../entity/document.entity';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
-export class ListDocumentsDto {
+export class ListDocumentsDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Filter by claim ID', type: String, example: 'CLM-2024-001' })
   @IsOptional()
   @IsString()
@@ -13,18 +13,4 @@ export class ListDocumentsDto {
   @IsOptional()
   @IsEnum(DocType)
   docType?: DocType;
-
-  @ApiPropertyOptional({ description: 'Page number (1-based)', type: Number, default: 1, example: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ description: 'Items per page', type: Number, default: 10, example: 10 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  limit?: number = 10;
 }

@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ClaimStatus, ClaimType } from '../entity/claim.entity';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
-export class ListClaimsDto {
+export class ListClaimsDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Filter by claim type', enum: ClaimType, example: ClaimType.A })
   @IsOptional()
   @IsEnum(ClaimType)
@@ -18,18 +18,4 @@ export class ListClaimsDto {
   @IsOptional()
   @IsString()
   search?: string;
-
-  @ApiPropertyOptional({ description: 'Page number (1-based)', type: Number, default: 1, example: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ description: 'Items per page', type: Number, default: 10, example: 10 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  limit?: number = 10;
 }

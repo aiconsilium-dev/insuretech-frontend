@@ -31,6 +31,8 @@ export class DashboardService {
 
     const row = rows[0];
 
+    // TODO: lossRateAb / lossRateC should be calculated from real data
+    //       (e.g. compare this month vs. last month) rather than hard-coded.
     return {
       totalClaims: row?.total_claims ?? 0,
       typeA: row?.type_a ?? 0,
