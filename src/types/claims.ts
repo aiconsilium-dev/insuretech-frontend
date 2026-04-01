@@ -1,27 +1,62 @@
 /**
- * Claims domain types
+ * Claims domain types — 보험사/손해사정사 어드민 모델
  */
 
 export type ClaimType = 'A' | 'B' | 'C';
-export type ClaimStatus = 'done' | 'sent' | 'wait' | 'transfer' | 'paid';
+export type ClaimSource = '입주민' | '관리사무소';
+export type ClaimStatus =
+  | '접수'
+  | '분류대기'
+  | '현장조사중'
+  | '산정중'
+  | '산정완료'
+  | '심사중'
+  | '승인대기'
+  | '승인완료'
+  | '지급완료'
+  | '면책통보'
+  | '반려'
+  | '완료';
 
-// Local UI shape
+export type FieldCheckStatus = '배정대기' | '조사중' | '보고서접수' | '검토완료';
+
 export interface Claim {
   id: string;
+  source: ClaimSource;
   complex: string;
-  description: string;
-  date: string;
-  type: ClaimType;
-  confidence: number;
+  dong: string;
+  ho: string;
+  accidentType: string;
+  type: ClaimType | null;
   status: ClaimStatus;
-  statusLabel: string;
-  amount?: number;
-  actionLabel?: string;
-  actionVariant?: 'primary' | 'secondary' | 'green';
-  actionRoute?: string;
-  highlighted?: boolean;
-  dimmed?: boolean;
+  aiAmount: number | null;
+  adjustedAmount: number | null;
+  finalAmount: number | null;
+  deductible: number;
+  date: string;
+  description: string;
+  confidence?: number;
+  // TYPE A specific
+  defectType?: string;
+  contractor?: string;
+  defectInspector?: string;
+  // TYPE B specific
+  exemptionReason?: string;
+  exemptionBasis?: string;
+  opinionSent?: boolean;
+  // TYPE C specific
+  corrected?: boolean;
+  // Field check
+  fieldStatus?: FieldCheckStatus;
+  fieldAssignDate?: string;
+  fieldReportDate?: string;
+  fieldPhotos?: string[];
+  fieldNote?: string;
+  fieldDamageLevel?: string;
 }
+
+// Legacy compat — kept for API layer
+export type LegacyClaimStatus = 'done' | 'sent' | 'wait' | 'transfer' | 'paid';
 
 // API response shapes
 export interface ClaimListItem {
@@ -42,7 +77,6 @@ export interface ClaimsListResponse {
   limit: number;
 }
 
-// Nested detail types
 export interface ClaimComplex {
   id: string;
   name: string;

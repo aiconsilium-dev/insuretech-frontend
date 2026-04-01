@@ -1,411 +1,415 @@
 /**
- * Mock / static data for fallback and development
- * Previously: src/lib/data.ts
+ * Mock data for 보험사/손해사정사 어드민
  */
 
 import type { Claim } from '@/types/claims';
+import type { EstimationItem } from '@/types/estimation';
+import type { ApproveItem, OpinionItem, NotificationItem } from '@/types/documents';
 import type { KPIData, BarItem, TimelineItemData, StageData, CaseItemData, KVRowData } from '@/types/ui';
-import type { OpinionItem } from '@/types/documents';
-import type { EstimationRow } from '@/types/estimation';
 
-// ── KPI 데이터 ──
-export const kpiData: KPIData[] = [
-  {
-    label: '이번 달 전체 청구',
-    value: 247,
-    description: '전월 대비 +12건',
-    variant: 'total',
-    route: '/claims',
-  },
-  {
-    label: 'TYPE A — 하자소송 이관',
-    value: 38,
-    description: '시공사 청구 증거자료 등록',
-    chipLabel: '소송 진행 중',
-    variant: 'type-a',
-    route: '/type-a',
-    valueStyle: 'var(--amber)',
-  },
-  {
-    label: 'TYPE B — 면책 처리',
-    value: 61,
-    description: '보험금 직접 차단',
-    chipLabel: '차단 건',
-    variant: 'type-b',
-    route: '/type-b',
-  },
-  {
-    label: 'TYPE C — AI 산출',
-    value: 148,
-    description: '평균 산출 7분 22초',
-    chipLabel: 'AI 처리',
-    variant: 'type-c',
-    route: '/type-c',
-    valueStyle: 'var(--green)',
-  },
-];
-
-// ── 청구 목록 (7건) ──
+// ── 접수 목록 (10건) ──
 export const claims: Claim[] = [
   {
-    id: 'CLM-0244',
-    complex: '은평뉴타운 관리동',
-    description: '엘리베이터 낙상 사고',
-    date: '2026-03-12',
-    type: 'C',
-    confidence: 0.983,
-    status: 'wait',
-    statusLabel: '승인 대기',
-    amount: 1240000,
-    actionLabel: '지금 승인',
-    actionVariant: 'green',
-    actionRoute: '/approve',
-    highlighted: true,
+    id: 'CLM-0401',
+    source: '입주민',
+    complex: '래미안 원베일리',
+    dong: '101',
+    ho: '1502',
+    accidentType: '균열·파손',
+    type: null,
+    status: '분류대기',
+    aiAmount: null,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 0,
+    date: '2026-04-01',
+    description: '거실 천장 균열 및 도장 파손',
   },
   {
-    id: 'CLM-0247',
-    complex: '헬리오시티 102동 1204호',
-    description: '천장 급배수 누수',
-    date: '2026-03-14',
+    id: 'CLM-0398',
+    source: '관리사무소',
+    complex: '헬리오시티',
+    dong: '102',
+    ho: '1204',
+    accidentType: '누수·침수',
     type: 'C',
-    confidence: 0.971,
-    status: 'done',
-    statusLabel: '적산 완료',
-    amount: 607850,
-    actionLabel: '상세',
-    actionVariant: 'primary',
-    actionRoute: '/type-c/CLM-0247',
+    status: '산정완료',
+    aiAmount: 920000,
+    adjustedAmount: 850000,
+    finalAmount: 850000,
+    deductible: 50000,
+    date: '2026-03-31',
+    description: '천장 급배수 누수로 인한 세대 내 피해',
+    corrected: true,
   },
   {
-    id: 'CLM-0246',
-    complex: '마포래미안 803호',
-    description: '외벽 수직 관통균열',
-    date: '2026-03-13',
+    id: 'CLM-0395',
+    source: '입주민',
+    complex: '마포래미안',
+    dong: '803',
+    ho: '501',
+    accidentType: '벽면균열',
     type: 'A',
-    confidence: 0.912,
-    status: 'transfer',
-    statusLabel: '소송 이관',
-    actionLabel: '증거 패키지',
-    actionVariant: 'secondary',
-    actionRoute: '/type-a/CLM-0246',
+    status: '현장조사중',
+    aiAmount: null,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 0,
+    date: '2026-03-30',
+    description: '외벽 수직 관통균열 0.8mm',
+    defectType: '주요 구조부 균열',
+    contractor: '○○건설',
+    fieldStatus: '조사중',
+    fieldAssignDate: '2026-03-30',
   },
   {
-    id: 'CLM-0245',
-    complex: '잠실파크리오 1205호',
-    description: '세탁기 배수 연결 불량',
-    date: '2026-03-13',
-    type: 'B',
-    confidence: 0.958,
-    status: 'sent',
-    statusLabel: '의견서 발송',
-    actionLabel: '이의신청 확인',
-    actionVariant: 'secondary',
-    actionRoute: '/type-b/CLM-0245',
-  },
-  {
-    id: 'CLM-0243',
-    complex: '송도더샵 A동 201호',
-    description: '시공 하자 — 바닥 침하',
-    date: '2026-03-12',
-    type: 'A',
-    confidence: 0.887,
-    status: 'transfer',
-    statusLabel: '소송 이관',
-    actionLabel: '증거 패키지',
-    actionVariant: 'secondary',
-    actionRoute: '/type-a/CLM-0243',
-  },
-  {
-    id: 'CLM-0242',
-    complex: '분당파크뷰 502호',
-    description: '바닥재 파손',
-    date: '2026-03-11',
-    type: 'B',
-    confidence: 0.931,
-    status: 'done',
-    statusLabel: '처리 완료',
-    actionLabel: '의견서',
-    actionVariant: 'secondary',
-    actionRoute: '/opinion',
-    dimmed: true,
-  },
-  {
-    id: 'CLM-0241',
-    complex: '래미안 원베일리 301호',
-    description: '욕실 배관 누수',
-    date: '2026-03-10',
+    id: 'CLM-0390',
+    source: '관리사무소',
+    complex: '송도더샵',
+    dong: 'A',
+    ho: '공용',
+    accidentType: '놀이터사고',
     type: 'C',
-    confidence: 0.991,
-    status: 'paid',
-    statusLabel: '지급 완료',
-    amount: 0,
-    actionLabel: '내역서',
-    actionVariant: 'secondary',
-    dimmed: true,
+    status: '심사중',
+    aiAmount: 1500000,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 100000,
+    date: '2026-03-28',
+    description: '어린이 놀이터 안전시설 파손으로 인한 부상',
   },
-];
-
-// ── 대시보드 최근 청구 (상위 5건) ──
-export const dashboardRecentClaims = claims.slice(1, 6);
-
-// ── 차트 데이터 ──
-export const barChartData: BarItem[] = [
-  { label: 'TYPE A', value: 15, color: 'amber' },
-  { label: 'TYPE B', value: 25, color: 'red' },
-  { label: 'TYPE C', value: 60, color: 'green' },
-];
-
-export const lossRateSummary = {
-  directBlock: { value: '-16.8%', label: 'A+B 직접 차단' },
-  overEstimate: { value: '-11.2%', label: 'C 과다견적 방어' },
-};
-
-// ── TYPE A 상세: 마포래미안 ──
-export const typeADetail = {
-  claimId: 'CLM-2026-0246',
-  badge: 'TYPE A — 하자소송 증거자료',
-  subBadge: '보험 면책 · 건설사 청구',
-  title: '마포래미안 외벽 수직 관통균열',
-  meta: '하자소송 증거자료 등록 / 접수: 2026-03-13 14:05 / 담당: 김지수',
-  navCounter: { current: 2, total: 38 },
-  warningBanner: {
-    title: '화재보험 면책 사항 — 시공상 하자',
-    content:
-      '화재보험 보통약관 면책 조항: "설계·재료·공사상의 결함으로 생긴 손해는 보상하지 않습니다." 본 건은 공동주택관리법 제37조에 따라 시공사에 하자담보책임을 청구합니다. AI가 수집한 사진·측정값은 소송 증거자료로 APT Insurance 소송팀에 전달됩니다.',
+  {
+    id: 'CLM-0385',
+    source: '입주민',
+    complex: '잠실파크리오',
+    dong: '205',
+    ho: '1205',
+    accidentType: '타일파손',
+    type: 'B',
+    status: '면책통보',
+    aiAmount: null,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 0,
+    date: '2026-03-25',
+    description: '세탁기 배수 연결 불량으로 타일 파손',
+    exemptionReason: '입주민 과실',
+    exemptionBasis: '보험약관 제4조 제2항 제3호',
+    opinionSent: true,
   },
-  stages: [
-    { label: 'AI 하자\n분류', status: 'done' as const },
-    { label: '증거자료\n패키징', status: 'done' as const },
-    { label: '소송\n제기', status: 'now' as const, stepNumber: 3 },
-    { label: '변론\n진행', status: 'pending' as const, stepNumber: 4 },
-    { label: '판결·\n합의', status: 'pending' as const, stepNumber: 5 },
-    { label: '건설사\n배상금 수령', status: 'pending' as const, stepNumber: 6 },
-  ] satisfies StageData[],
-  photos: [
-    {
-      label: '전경 — 소송 증거 등록',
-      span: 2,
-      bg: '#d8e4ed',
-      borderStyle: 'dashed-amber' as const,
-      badges: [
-        { text: '균열 측정 0.8mm', color: 'var(--color-amber)', position: 'bottom-left' as const },
-        { text: '증거 등록 완료', color: 'var(--color-green)', position: 'top-right' as const },
-      ],
-    },
-    { label: '근접 1', span: 1, bg: '#cdd9e5' },
-    { label: '근접 2', span: 1, bg: '#c2cfda' },
-  ],
-  defectInfo: [
-    { label: '시공사 (청구 상대방)', value: '○○건설' },
-    { label: '준공일', value: '2018년 11월' },
-    { label: '하자 유형', value: '주요 구조부 균열 (10년 담보)' },
-    { label: '잔여 담보 기간', value: '5년 1개월 — 소송 적격', valueColor: 'green' as const },
-    { label: '단지 합산 청구 예정액', value: '약 38억원', valueColor: 'primary' as const, valueFontSize: '15px' },
-    { label: '본 건 기여 예상액', value: '약 38,000,000원', valueColor: 'amber' as const },
-  ] satisfies KVRowData[],
-  aiConfidence: 91.2,
-  reasons: [
-    '수직 관통균열 폭 0.8mm — 건설기준 허용치(0.3mm) 2.7배 초과',
-    '균열 방향·패턴이 전단 변형 구조적 하자와 일치 — 외부 충격 아님',
-    '건축 4.9년차, 하자담보 기간(10년) 이내 → 시공사 귀책',
-  ],
-  cases: [
-    { caseNumber: '대법원 2019다287231', description: '외벽 균열 시공사 귀책 인정 — 손해배상 확정' },
-    { caseNumber: '서울고법 2021나38421', description: '동일 균열 패턴 공동주택 하자담보책임 인용' },
-  ] satisfies CaseItemData[],
-  timeline: [
-    { title: 'AI 하자 분류 완료 (시공상 하자 확인)', time: '2026-03-13 14:05', status: 'done' as const },
-    { title: '증거자료 패키지 자동 생성 → APT Insurance 소송팀 전달', time: '2026-03-13 14:07', status: 'done' as const },
-    { title: '소송 제기 준비 중', time: '진행 중', status: 'now' as const, stepNumber: 3 },
-    { title: '변론 진행 예정', time: '대기', status: 'wait' as const, stepNumber: 4 },
-  ] satisfies TimelineItemData[],
-};
-
-// ── TYPE B 상세: 잠실파크리오 ──
-export const typeBDetail = {
-  claimId: 'CLM-2026-0245',
-  badge: 'TYPE B — 면책 처리',
-  title: '잠실파크리오 세탁기 배수 연결 불량',
-  meta: '영업배상책임보험 / 접수: 2026-03-13 11:30 / 청구인: 홍○○',
-  navCounter: { current: 1, total: 61 },
-  statusFlowItems: ['면책 통보 완료', '이의신청 수신', '재검토 중', '최종 종결'],
-  statusFlowDescriptions: [
-    '2026-03-13 법률 의견서와 함께 면책 사유 발송 완료. 이의신청 기한: 30일',
-    '이의신청이 수신되었습니다. APT Insurance 법무팀 검토 중입니다.',
-    'APT Insurance 법무팀이 이의신청을 재검토하고 있습니다. 추가 서류가 요청될 수 있습니다.',
-    '최종 종결 처리되었습니다. 청구인에게 최종 결정 통보가 발송되었습니다.',
-  ],
-  aiConfidence: 95.8,
-  reasons: [
-    '세탁기 배수 호스 연결부 이탈 흔적 확인',
-    '외부 충격 없이 점유자 부주의로 인한 배수 불량 패턴',
-    '민법 758조 공작물 책임 — \'설치·관리 하자\' 미충족',
-  ],
-  clauseText: '보험약관 제4조 제2항 제3호 — 피보험자/점유자의 고의·과실',
-  cases: [
-    { caseNumber: '서울중앙지법 2022가단52890', description: '세입자 과실로 인한 면책 판결', numberColor: 'red' as const },
-  ] satisfies CaseItemData[],
-  opinionSummary: {
-    title: '면책 통보 의견서 — 발송 완료',
-    content: '본 건은 보험약관 제4조 제2항 제3호에 따라 면책 대상으로 판단됩니다.',
-    footer: 'APT Insurance 법무팀 최종 검토 완료 | 2026-03-13 15:22',
+  {
+    id: 'CLM-0382',
+    source: '입주민',
+    complex: '은평뉴타운',
+    dong: '301',
+    ho: '901',
+    accidentType: '급배수 누수',
+    type: 'C',
+    status: '승인대기',
+    aiAmount: 1240000,
+    adjustedAmount: 1240000,
+    finalAmount: 1240000,
+    deductible: 50000,
+    date: '2026-03-22',
+    description: '엘리베이터 홀 급배수 배관 누수',
+    corrected: false,
   },
-  objectionRemainingDays: 17,
-  civilDocuments: ['민원 대응 요약서', '약관 조항 해석서', '유사 판례 패키지'],
-};
-
-// ── TYPE C 상세: 헬리오시티 ──
-export const typeCDetail = {
-  claimId: 'CLM-2026-0247',
-  badge: 'TYPE C — 보험 지급',
-  title: '헬리오시티 102동 1204호 천장 급배수 누수',
-  meta: '주택화재보험 / 접수: 2026-03-14 09:23',
-  confidence: 97.1,
-  photos: [
-    {
-      label: '세그멘테이션 결과',
-      span: 2,
-      bg: '#d0e8f5',
-      borderStyle: 'dashed-primary' as const,
-      badges: [{ text: 'AREA 2.4㎡', color: 'var(--color-primary)', position: 'bottom-right' as const }],
-    },
-    { label: '근접 확인', span: 1, bg: '#c8e0ed' },
-    { label: '재료 확인', span: 1, bg: '#bfd7e7' },
-  ],
-  reasons: [
-    '공용 급배수 배관 누출에 의한 전유부 피해 확인',
-    'TYPE A(시공 하자) 근거 불충분',
-    'TYPE B(점유자 과실) 증거 없음 → 정당 보상 대상',
-  ],
-  estimationResult: {
-    totalAmount: 607850,
-    calculationTime: '6분 41초',
-    vendorEstimate: 850000,
-    savingsPercent: 28.5,
-    savingsAmount: 242150,
-    breakdown: [
-      { label: '재료비 (방수층 3.1㎡)', value: '182,400원' },
-      { label: '노무비 (재도장 12.3㎡)', value: '298,700원' },
-      { label: '균열주입 (4.7m)', value: '186,900원' },
-      { label: '감가상각 (9.2%)', value: '-60,150원', valueColor: 'red' as const },
-    ] satisfies KVRowData[],
+  {
+    id: 'CLM-0378',
+    source: '관리사무소',
+    complex: '분당파크뷰',
+    dong: '502',
+    ho: '공용',
+    accidentType: '바닥재 파손',
+    type: 'B',
+    status: '완료',
+    aiAmount: null,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 0,
+    date: '2026-03-20',
+    description: '지하주차장 바닥재 파손',
+    exemptionReason: '자연노화',
+    exemptionBasis: '보험약관 면책조항 해당',
+    opinionSent: true,
+  },
+  {
+    id: 'CLM-0375',
+    source: '입주민',
+    complex: '래미안 원베일리',
+    dong: '101',
+    ho: '301',
+    accidentType: '욕실 배관 누수',
+    type: 'C',
+    status: '지급완료',
+    aiAmount: 607850,
+    adjustedAmount: 607850,
     finalAmount: 607850,
+    deductible: 30000,
+    date: '2026-03-18',
+    description: '욕실 배관 누수로 인한 하부 세대 피해',
+    corrected: false,
   },
-};
+  {
+    id: 'CLM-0370',
+    source: '관리사무소',
+    complex: '마포래미안',
+    dong: '805',
+    ho: '공용',
+    accidentType: '외벽 타일 탈락',
+    type: 'A',
+    status: '접수',
+    aiAmount: null,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 0,
+    date: '2026-03-15',
+    description: '외벽 타일 대면적 탈락 — 시공 하자 의심',
+    defectType: '외장재 하자',
+    contractor: '○○건설',
+  },
+  {
+    id: 'CLM-0365',
+    source: '입주민',
+    complex: '헬리오시티',
+    dong: '103',
+    ho: '805',
+    accidentType: '창호 결로',
+    type: 'B',
+    status: '면책통보',
+    aiAmount: null,
+    adjustedAmount: null,
+    finalAmount: null,
+    deductible: 0,
+    date: '2026-03-12',
+    description: '창호 결로 및 곰팡이 발생',
+    exemptionReason: '보험 면책조항 해당',
+    exemptionBasis: '자연현상으로 인한 결로는 면책',
+    opinionSent: true,
+  },
+];
 
-// ── 적산 수량 내역서 ──
-export const estimationRows: EstimationRow[] = [
+// ── 적산 데이터 ──
+export const estimationItems: EstimationItem[] = [
   {
     id: 1,
-    name: '방수층 보수',
-    description: '탄성도막 방수',
-    quantity: '3.10',
-    unit: '㎡',
-    standardLabel: '표준품셈',
-    standardVariant: 'primary',
-    subtotal: 79100,
-    checked: true,
+    claimId: 'CLM-0398',
+    complex: '헬리오시티',
+    dongHo: '102동 1204호',
+    accidentType: '누수·침수',
+    items: [
+      { name: '방수층 보수', description: '탄성도막 방수', quantity: 3.1, unit: '㎡', unitPrice: 25500, subtotal: 79050, standardLabel: '표준품셈' },
+      { name: '천장 재도장', description: '퍼티 + 도장 2회', quantity: 12.3, unit: '㎡', unitPrice: 10140, subtotal: 124722, standardLabel: '물가정보지' },
+      { name: '균열주입', description: '에폭시 수지', quantity: 4.7, unit: 'm', unitPrice: 22320, subtotal: 104904, standardLabel: '표준품셈' },
+      { name: '석고보드 교체', description: '9.5T 석고보드', quantity: 2.4, unit: '㎡', unitPrice: 17800, subtotal: 42720, standardLabel: '표준품셈' },
+    ],
+    aiTotal: 920000,
+    adjustedTotal: 850000,
+    confirmed: true,
+    deductible: 50000,
+    insuranceAmount: 800000,
   },
   {
     id: 2,
-    name: '천장 재도장',
-    description: '퍼티 + 도장 2회',
-    quantity: '12.30',
-    unit: '㎡',
-    standardLabel: '물가정보지',
-    standardVariant: 'green',
-    subtotal: 124700,
-    checked: true,
+    claimId: 'CLM-0390',
+    complex: '송도더샵',
+    dongHo: 'A동 공용',
+    accidentType: '놀이터사고',
+    items: [
+      { name: '안전매트 교체', description: '고무안전매트', quantity: 8.0, unit: '㎡', unitPrice: 85000, subtotal: 680000, standardLabel: '물가정보지' },
+      { name: '울타리 보수', description: '안전울타리', quantity: 12.0, unit: 'm', unitPrice: 35000, subtotal: 420000, standardLabel: '표준품셈' },
+      { name: '도장 보수', description: '놀이기구 도장', quantity: 1.0, unit: '식', unitPrice: 400000, subtotal: 400000, standardLabel: '견적' },
+    ],
+    aiTotal: 1500000,
+    adjustedTotal: null,
+    confirmed: false,
+    deductible: 100000,
+    insuranceAmount: null,
   },
   {
     id: 3,
-    name: '균열주입',
-    description: '에폭시 수지',
-    quantity: '4.70',
-    unit: 'm',
-    standardLabel: '표준품셈',
-    standardVariant: 'primary',
-    subtotal: 104900,
-    checked: true,
+    claimId: 'CLM-0382',
+    complex: '은평뉴타운',
+    dongHo: '301동 901호',
+    accidentType: '급배수 누수',
+    items: [
+      { name: '배관 교체', description: 'PVC 배관', quantity: 5.2, unit: 'm', unitPrice: 45000, subtotal: 234000, standardLabel: '표준품셈' },
+      { name: '천장 복구', description: '석고보드+도장', quantity: 6.8, unit: '㎡', unitPrice: 28000, subtotal: 190400, standardLabel: '표준품셈' },
+      { name: '바닥 방수', description: '우레탄 방수', quantity: 4.5, unit: '㎡', unitPrice: 32000, subtotal: 144000, standardLabel: '물가정보지' },
+      { name: '벽지 교체', description: '실크벽지', quantity: 18.0, unit: '㎡', unitPrice: 12000, subtotal: 216000, standardLabel: '물가정보지' },
+      { name: '간접노무비', description: '10.5%', quantity: 1.0, unit: '식', unitPrice: 82362, subtotal: 82362, standardLabel: '표준품셈' },
+    ],
+    aiTotal: 1240000,
+    adjustedTotal: 1240000,
+    confirmed: true,
+    deductible: 50000,
+    insuranceAmount: 1190000,
   },
   {
     id: 4,
-    name: '석고보드 교체',
-    description: '미선택',
-    quantity: '2.40',
-    unit: '㎡',
-    standardLabel: '',
-    standardVariant: 'primary',
-    subtotal: 42700,
-    checked: false,
+    claimId: 'CLM-0375',
+    complex: '래미안 원베일리',
+    dongHo: '101동 301호',
+    accidentType: '욕실 배관 누수',
+    items: [
+      { name: '방수층 보수', description: '탄성도막 방수', quantity: 3.1, unit: '㎡', unitPrice: 25500, subtotal: 79050, standardLabel: '표준품셈' },
+      { name: '재도장', description: '퍼티+도장 2회', quantity: 12.3, unit: '㎡', unitPrice: 24290, subtotal: 298767, standardLabel: '물가정보지' },
+      { name: '균열주입', description: '에폭시 수지', quantity: 4.7, unit: 'm', unitPrice: 39766, subtotal: 186900, standardLabel: '표준품셈' },
+    ],
+    aiTotal: 607850,
+    adjustedTotal: 607850,
+    confirmed: true,
+    deductible: 30000,
+    insuranceAmount: 577850,
   },
 ];
 
-export const estimationDeductions = {
-  depreciation: 60150,
-  deductible: 30000,
-  indirectRate: 0.105,
-};
-
-// ── 법률 의견서 목록 ──
-export const opinions: OpinionItem[] = [
+// ── 승인 데이터 ──
+export const approveItems: ApproveItem[] = [
   {
-    claimId: 'CLM-0245',
-    summary: '잠실파크리오 — 세탁기 배수',
-    type: '면책 통보서',
-    date: '2026-03-13',
-    status: 'done',
-    statusLabel: '발송 완료',
-    actionLabel: 'PDF',
-    actionVariant: 'secondary',
+    claimId: 'CLM-0382',
+    accidentType: '급배수 누수',
+    complex: '은평뉴타운',
+    dongHo: '301동 901호',
+    finalAmount: 1190000,
+    requestDate: '2026-03-25',
+    status: '대기',
   },
   {
-    claimId: 'CLM-0246',
-    summary: '마포래미안 — 외벽 균열',
-    type: '소송 이관 근거서',
-    date: '2026-03-13',
-    status: 'transfer',
-    statusLabel: 'APT Insurance 전달',
-    actionLabel: 'PDF',
-    actionVariant: 'secondary',
+    claimId: 'CLM-0398',
+    accidentType: '누수·침수',
+    complex: '헬리오시티',
+    dongHo: '102동 1204호',
+    finalAmount: 800000,
+    requestDate: '2026-03-31',
+    status: '대기',
   },
   {
-    claimId: 'CLM-0247',
-    summary: '헬리오시티 — 급배수 누수',
-    type: '손해사정 의견서',
-    date: '2026-03-14',
-    status: 'wait',
-    statusLabel: '승인 대기',
-    actionLabel: '승인',
-    actionVariant: 'primary',
-    actionRoute: '/approve',
+    claimId: 'CLM-0375',
+    accidentType: '욕실 배관 누수',
+    complex: '래미안 원베일리',
+    dongHo: '101동 301호',
+    finalAmount: 577850,
+    requestDate: '2026-03-20',
+    status: '승인',
+    approveDate: '2026-03-21',
+    approver: '김지수 손해사정사',
   },
   {
-    claimId: 'CLM-0242',
-    summary: '분당파크뷰 — 바닥재 파손',
-    type: '면책 통보서',
-    date: '2026-03-11',
-    status: 'done',
-    statusLabel: '처리 완료',
-    actionLabel: 'PDF',
-    actionVariant: 'secondary',
+    claimId: 'CLM-0390',
+    accidentType: '놀이터사고',
+    complex: '송도더샵',
+    dongHo: 'A동 공용',
+    finalAmount: 1400000,
+    requestDate: '2026-03-29',
+    status: '대기',
   },
 ];
 
-// ── 승인 페이지 타임라인 ──
-export const approveTimeline: TimelineItemData[] = [
-  { title: '청구 접수', time: '2026-03-14 09:23', status: 'done' },
-  { title: 'AI 분류 완료 (TYPE C)', time: '2026-03-14 09:24', status: 'done' },
-  { title: '적산 산출 완료 (607,850원)', time: '2026-03-14 09:31', status: 'done' },
-  { title: '법률 의견서 첨부', time: '2026-03-14 09:45', status: 'done' },
-  { title: '손해사정사 최종 승인 대기', time: '현재', status: 'now', stepNumber: 5 },
+// ── 의견서 데이터 ──
+export const opinionItems: OpinionItem[] = [
+  {
+    id: 'OPN-001',
+    claimId: 'CLM-0385',
+    type: '면책의견서',
+    summary: '잠실파크리오 타일파손 — 입주민 과실 면책',
+    date: '2026-03-25',
+    status: '발송완료',
+    recipient: '홍○○',
+  },
+  {
+    id: 'OPN-002',
+    claimId: 'CLM-0378',
+    type: '면책의견서',
+    summary: '분당파크뷰 바닥재 파손 — 자연노화 면책',
+    date: '2026-03-20',
+    status: '발송완료',
+    recipient: '분당파크뷰 관리사무소',
+  },
+  {
+    id: 'OPN-003',
+    claimId: 'CLM-0365',
+    type: '면책의견서',
+    summary: '헬리오시티 창호 결로 — 면책조항 해당',
+    date: '2026-03-12',
+    status: '발송완료',
+    recipient: '박○○',
+  },
+  {
+    id: 'OPN-004',
+    claimId: 'CLM-0385',
+    type: '이의신청검토',
+    summary: '잠실파크리오 타일파손 — 이의신청 접수',
+    date: '2026-04-01',
+    status: '이의신청접수',
+  },
+  {
+    id: 'OPN-005',
+    claimId: 'CLM-0398',
+    type: '손해사정의견서',
+    summary: '헬리오시티 누수 — 손해사정 의견서',
+    date: '2026-03-31',
+    status: '발송완료',
+    recipient: '헬리오시티 관리사무소',
+  },
+  {
+    id: 'OPN-006',
+    claimId: 'CLM-0382',
+    type: '보완요청',
+    summary: '은평뉴타운 급배수 — 추가 사진 요청',
+    date: '2026-03-24',
+    status: '작성중',
+  },
 ];
 
-// ── 탭 필터 카운트 ──
-export const claimTabCounts = {
-  all: 247,
-  a: 38,
-  b: 61,
-  c: 148,
-  wait: 3,
-};
+// ── 알림 데이터 ──
+export const notifications: NotificationItem[] = [
+  { message: '101동 1502호 방문요청 접수', time: '10분 전', type: 'info' },
+  { message: 'CLM-0398 현장조사 보고서 도착', time: '1시간 전', type: 'success' },
+  { message: 'CLM-0385 이의신청 접수', time: '3시간 전', type: 'warning' },
+];
+
+// ── 대시보드 KPI 헬퍼 ──
+export function getDashboardStats() {
+  const thisMonth = claims.filter((c) => c.date >= '2026-03-01');
+  const fieldWaiting = claims.filter(
+    (c) => c.status === '현장조사중' || c.fieldStatus === '배정대기' || c.fieldStatus === '조사중',
+  );
+  const approveWaiting = approveItems.filter((a) => a.status === '대기');
+  const paidThisMonth = claims
+    .filter((c) => c.status === '지급완료' && c.date >= '2026-03-01')
+    .reduce((sum, c) => sum + (c.finalAmount || 0), 0);
+
+  const residentCount = claims.filter((c) => c.source === '입주민').length;
+  const officeCount = claims.filter((c) => c.source === '관리사무소').length;
+
+  const typeACount = claims.filter((c) => c.type === 'A').length;
+  const typeBCount = claims.filter((c) => c.type === 'B').length;
+  const typeCCount = claims.filter((c) => c.type === 'C').length;
+
+  return {
+    totalClaims: thisMonth.length,
+    fieldWaiting: fieldWaiting.length,
+    approveWaiting: approveWaiting.length,
+    paidAmount: paidThisMonth + 32450000,
+    residentCount,
+    officeCount,
+    typeACount,
+    typeBCount,
+    typeCCount,
+  };
+}
+
+// ── Legacy compat exports (used by common components like BarChart) ──
+export const kpiData: KPIData[] = [
+  { label: '전체 접수', value: 47, description: '이번 달', variant: 'total', route: '/claims' },
+  { label: 'TYPE A', value: 2, description: '시공사 하자', chipLabel: '소송중', variant: 'type-a', route: '/type-a' },
+  { label: 'TYPE B', value: 3, description: '면책', chipLabel: '면책', variant: 'type-b', route: '/type-b' },
+  { label: 'TYPE C', value: 4, description: '보험금 산출', chipLabel: 'AI', variant: 'type-c', route: '/type-c' },
+];
+
+export const barChartData: BarItem[] = [
+  { label: 'TYPE A', value: 2, color: 'amber' },
+  { label: 'TYPE B', value: 3, color: 'red' },
+  { label: 'TYPE C', value: 4, color: 'green' },
+];

@@ -5,6 +5,7 @@ import ClaimsPage from '@/pages/ClaimsPage';
 import TypeAPage from '@/pages/TypeAPage';
 import TypeBPage from '@/pages/TypeBPage';
 import TypeCPage from '@/pages/TypeCPage';
+import FieldCheckPage from '@/pages/FieldCheckPage';
 import EstimationPage from '@/pages/EstimationPage';
 import ApprovePage from '@/pages/ApprovePage';
 import OpinionPage from '@/pages/OpinionPage';
@@ -15,9 +16,10 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/claims" element={<ClaimsPage />} />
-        <Route path="/type-a/:id" element={<TypeAPage />} />
-        <Route path="/type-b/:id" element={<TypeBPage />} />
-        <Route path="/type-c/:id" element={<TypeCPage />} />
+        <Route path="/type-a" element={<TypeAPage />} />
+        <Route path="/type-b" element={<TypeBPage />} />
+        <Route path="/type-c" element={<TypeCPage />} />
+        <Route path="/field" element={<FieldCheckPage />} />
         <Route path="/estimation" element={<EstimationPage />} />
         <Route path="/approve" element={<ApprovePage />} />
         <Route path="/opinion" element={<OpinionPage />} />

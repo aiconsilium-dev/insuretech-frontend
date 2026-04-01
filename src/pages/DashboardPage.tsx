@@ -1,261 +1,219 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  KPICard,
-  Badge,
-  StatusPill,
-  DataTable,
-  DetailCard,
-  BarChart,
-  Button,
-} from '@/components/common';
+import { KPICard, DataTable, StatusPill, Button } from '@/components/common';
 import type { Column } from '@/components/common';
-import type { Claim } from '@/lib/types';
-import { kpiData, dashboardRecentClaims, barChartData } from '@/lib/data';
-import { fetchKpi, fetchClaims } from '@/lib/api';
-import type { KpiData, ClaimListItem } from '@/lib/api';
+import { claims, notifications, getDashboardStats } from '@/data/mockData';
+import type { Claim } from '@/types/claims';
 
-const typeToRoute: Record<string, string> = {
-  A: '/type-a',
-  B: '/type-b',
-  C: '/type-c',
-};
-
-const badgeVariantMap: Record<string, 'ba' | 'bb' | 'bc'> = {
-  A: 'ba',
-  B: 'bb',
-  C: 'bc',
+const typeColorMap: Record<string, string> = {
+  A: '#C9252C',
+  B: '#64748B',
+  C: '#00854A',
 };
 
 const statusVariantMap: Record<string, 'done' | 'sent' | 'wait' | 'transfer'> = {
-  done: 'done',
-  sent: 'sent',
-  wait: 'wait',
-  transfer: 'transfer',
-  paid: 'done',
+  '접수': 'wait',
+  '분류대기': 'wait',
+  '현장조사중': 'transfer',
+  '산정중': 'sent',
+  '산정완료': 'done',
+  '심사중': 'sent',
+  '승인대기': 'wait',
+  '승인완료': 'done',
+  '지급완료': 'done',
+  '면책통보': 'sent',
+  '반려': 'wait',
+  '완료': 'done',
 };
-
-// Map API ClaimListItem → local Claim shape for DataTable
-function mapApiClaim(item: ClaimListItem): Claim {
-  return {
-    id: item.id,
-    complex: item.complexName,
-    description: item.description,
-    date: item.claimedAt?.slice(0, 10) ?? '',
-    type: item.type,
-    confidence: item.aiConfidence,
-    status: item.status as Claim['status'],
-    statusLabel: item.status,
-    amount: item.amount,
-    actionLabel: '상세',
-    actionVariant: 'primary',
-    actionRoute: typeToRoute[item.type] ?? '/claims',
-  };
-}
-
-// Loading skeleton for KPI cards
-function KPICardSkeleton() {
-  return (
-    <div className="bg-card rounded-card border border-border p-4 animate-pulse">
-      <div className="h-3 bg-border-light rounded w-2/3 mb-3" />
-      <div className="h-8 bg-border-light rounded w-1/2 mb-2" />
-      <div className="h-3 bg-border-light rounded w-3/4" />
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-
-  // API state
-  const [kpi, setKpi] = useState<KpiData | null>(null);
-  const [recentClaims, setRecentClaims] = useState<Claim[]>([]);
-  const [lossRateAb, setLossRateAb] = useState<number>(-16.8);
-  const [lossRateC, setLossRateC] = useState<number>(-11.2);
-  const [loading, setLoading] = useState(true);
-  const [claimsLoading, setClaimsLoading] = useState(true);
-
-  // Fetch KPI
-  useEffect(() => {
-    let cancelled = false;
-    fetchKpi()
-      .then((data) => {
-        if (cancelled) return;
-        setKpi(data);
-        setLossRateAb(data.lossRateAb);
-        setLossRateC(data.lossRateC);
-      })
-      .catch(() => {
-        // Fallback: keep null → will use mock data below
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  // Fetch recent claims
-  useEffect(() => {
-    let cancelled = false;
-    fetchClaims({ limit: 5 })
-      .then((data) => {
-        if (cancelled) return;
-        setRecentClaims(data.items.map(mapApiClaim));
-      })
-      .catch(() => {
-        // Fallback: use mock data
-        if (!cancelled) setRecentClaims(dashboardRecentClaims);
-      })
-      .finally(() => {
-        if (!cancelled) setClaimsLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  // Build KPI cards from API data or fall back to mock
-  const kpiCards = kpi
-    ? [
-        {
-          ...kpiData[0],
-          value: kpi.totalClaims,
-        },
-        {
-          ...kpiData[1],
-          value: kpi.typeA,
-        },
-        {
-          ...kpiData[2],
-          value: kpi.typeB,
-        },
-        {
-          ...kpiData[3],
-          value: kpi.typeC,
-        },
-      ]
-    : kpiData;
-
-  const displayClaims = recentClaims.length > 0 ? recentClaims : dashboardRecentClaims;
+  const stats = getDashboardStats();
+  const recentClaims = claims.slice(0, 5);
 
   const columns: Column<Claim>[] = [
+    { key: 'id', label: '접수번호', width: '110px' },
     {
-      key: 'id',
-      label: '청구번호',
-      width: '100px',
-      render: (row) => (
-        <span className="text-[11px] text-secondary">{row.id}</span>
-      ),
-    },
-    {
-      key: 'complex',
-      label: '단지·내용',
-      render: (row) => (
-        <div>
-          <div className="font-semibold">{row.complex}</div>
-          <div className="text-[11px] text-secondary">{row.description}</div>
-        </div>
-      ),
-    },
-    {
-      key: 'date',
-      label: '접수일',
-      width: '80px',
-      render: (row) => (
-        <span className="text-[12px] text-secondary">{row.date.slice(5).replace('-', '/')}</span>
-      ),
-    },
-    {
-      key: 'type',
-      label: '유형',
+      key: 'source',
+      label: '소스',
       width: '90px',
       render: (row) => (
-        <Badge variant={badgeVariantMap[row.type]}>TYPE {row.type}</Badge>
+        <span className="text-[12px]">
+          {row.source === '입주민' ? '🏠 입주민' : '🏢 관리소'}
+        </span>
       ),
     },
+    { key: 'accidentType', label: '유형', width: '110px' },
     {
-      key: 'confidence',
-      label: '신뢰도',
+      key: 'type',
+      label: 'TYPE',
       width: '80px',
-      render: (row) => {
-        const pct = (row.confidence * 100).toFixed(1);
-        const color = row.confidence >= 0.9 ? 'text-green' : 'text-amber';
-        return <span className={`font-semibold ${color}`}>{pct}%</span>;
-      },
+      align: 'center',
+      render: (row) =>
+        row.type ? (
+          <span
+            className="text-[11px] font-bold px-2 py-[2px] rounded-badge"
+            style={{
+              backgroundColor: typeColorMap[row.type] + '15',
+              color: typeColorMap[row.type],
+            }}
+          >
+            {row.type}
+          </span>
+        ) : (
+          <span className="text-muted text-[11px]">—</span>
+        ),
     },
     {
       key: 'status',
       label: '상태',
       width: '100px',
       render: (row) => (
-        <StatusPill variant={statusVariantMap[row.status] ?? 'done'}>
-          {row.statusLabel}
+        <StatusPill variant={statusVariantMap[row.status] || 'wait'}>
+          {row.status}
         </StatusPill>
       ),
+    },
+    {
+      key: 'finalAmount',
+      label: '금액',
+      width: '110px',
+      align: 'right',
+      render: (row) =>
+        row.finalAmount ? (
+          <span className="font-semibold">
+            {row.finalAmount.toLocaleString()}원
+          </span>
+        ) : (
+          <span className="text-muted">—</span>
+        ),
+    },
+    {
+      key: 'date',
+      label: '날짜',
+      width: '90px',
+      render: (row) => row.date.slice(5).replace('-', '.'),
     },
   ];
 
   return (
-    <div>
-      {/* Page Title */}
-      <div className="text-[18px] font-bold tracking-[-0.4px] mb-[3px]">청구 관리 대시보드</div>
-      <div className="text-[13px] text-secondary mb-[18px]">2026년 3월 · 전체 단지 기준</div>
-
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-[18px]">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <KPICardSkeleton key={i} />)
-          : kpiCards.map((kpi) => (
-              <KPICard
-                key={kpi.variant}
-                {...kpi}
-                onClick={() => navigate(kpi.route ?? '/claims')}
-              />
-            ))}
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-[20px] font-bold tracking-[-0.3px]">통합 대시보드</h1>
+        <p className="text-[13px] text-secondary mt-1">
+          보험사·손해사정사 접수건 현황을 한눈에 파악합니다
+        </p>
       </div>
 
-      {/* 2-column layout */}
-      <div className="grid gap-[14px] grid-cols-1 xl:grid-cols-[1fr_300px]">
-        {/* Left: Recent Claims Table */}
-        {claimsLoading ? (
-          <div className="bg-card rounded-card border border-border p-6 animate-pulse">
-            <div className="h-4 bg-border-light rounded w-1/4 mb-4" />
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-10 bg-border-light rounded mb-2" />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        <KPICard
+          label="전체 접수"
+          value={`${stats.totalClaims}건`}
+          description="이번 달"
+          variant="total"
+          onClick={() => navigate('/claims')}
+        />
+        <KPICard
+          label="현장조사 대기"
+          value={`${stats.fieldWaiting}건`}
+          description="배정 필요"
+          variant="type-a"
+          onClick={() => navigate('/field')}
+        />
+        <KPICard
+          label="보험금 승인 대기"
+          value={`${stats.approveWaiting}건`}
+          description="결재 필요"
+          variant="type-b"
+          onClick={() => navigate('/approve')}
+        />
+        <KPICard
+          label="이번 달 지급액"
+          value={`${(stats.paidAmount / 10000).toLocaleString()}만원`}
+          description="누적 지급"
+          variant="type-c"
+          onClick={() => navigate('/approve')}
+        />
+      </div>
+
+      {/* Source & Type Distribution */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-card rounded-card border border-border p-[18px]">
+          <div className="text-[11px] font-bold text-secondary uppercase tracking-[0.5px] mb-3">
+            소스별 접수 현황
+          </div>
+          <div className="flex gap-6">
+            <div className="flex-1 text-center py-3 bg-[#F0F9FF] rounded-block">
+              <div className="text-[24px] font-bold text-[#0061AF]">{stats.residentCount}</div>
+              <div className="text-[11px] text-secondary mt-1">🏠 입주민 접수</div>
+            </div>
+            <div className="flex-1 text-center py-3 bg-[#FFF7ED] rounded-block">
+              <div className="text-[24px] font-bold text-amber">{stats.officeCount}</div>
+              <div className="text-[11px] text-secondary mt-1">🏢 관리사무소 접수</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-card border border-border p-[18px]">
+          <div className="text-[11px] font-bold text-secondary uppercase tracking-[0.5px] mb-3">
+            TYPE별 분포
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'TYPE A (시공사 하자)', count: stats.typeACount, color: '#C9252C' },
+              { label: 'TYPE B (면책)', count: stats.typeBCount, color: '#64748B' },
+              { label: 'TYPE C (보험금 산출)', count: stats.typeCCount, color: '#00854A' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3">
+                <div className="w-[140px] text-[12px] font-medium truncate">{item.label}</div>
+                <div className="flex-1 h-[22px] bg-border-light rounded overflow-hidden">
+                  <div
+                    className="h-full rounded transition-all"
+                    style={{
+                      width: `${Math.max((item.count / 10) * 100, 8)}%`,
+                      backgroundColor: item.color,
+                      opacity: 0.8,
+                    }}
+                  />
+                </div>
+                <div className="text-[13px] font-bold w-[40px] text-right">{item.count}건</div>
+              </div>
             ))}
           </div>
-        ) : (
-          <DataTable<Claim>
-            title="최근 청구 내역"
-            columns={columns}
-            data={displayClaims}
-            onRowClick={(row) => navigate(typeToRoute[row.type] ?? '/claims')}
-            headerRight={
-              <Button variant="secondary" size="sm" onClick={() => navigate('/claims')}>
-                전체 보기
-              </Button>
-            }
-          />
-        )}
+        </div>
+      </div>
 
-        {/* Right: Loss Rate + Savings */}
-        <div className="flex flex-col gap-[14px]">
-          <DetailCard title="TYPE별 손해율 절감">
-            <BarChart items={barChartData} />
-            {/* Savings Summary Box */}
-            <div className="bg-border-light rounded-block p-3 mt-4">
-              <div className="text-[11px] text-secondary mb-[7px]">이번 달 손해율 절감</div>
-              <div className="flex gap-3">
-                <div>
-                  <div className="text-[18px] font-bold text-amber">{lossRateAb}%</div>
-                  <div className="text-[10px] text-secondary">A+B 직접 차단</div>
-                </div>
-                <div className="w-px bg-border" />
-                <div>
-                  <div className="text-[18px] font-bold text-green">{lossRateC}%</div>
-                  <div className="text-[10px] text-secondary">C 과다견적 방어</div>
-                </div>
-              </div>
+      {/* Recent Claims Table */}
+      <DataTable
+        title="최근 접수"
+        columns={columns}
+        data={recentClaims}
+        onRowClick={() => navigate('/claims')}
+        headerRight={
+          <Button variant="secondary" size="sm" onClick={() => navigate('/claims')}>
+            전체 보기 →
+          </Button>
+        }
+      />
+
+      {/* Notifications */}
+      <div className="bg-card rounded-card border border-border p-[18px]">
+        <div className="text-[11px] font-bold text-secondary uppercase tracking-[0.5px] mb-3">
+          알림
+        </div>
+        <div className="space-y-2">
+          {notifications.map((n, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 py-2 px-3 rounded-block bg-border-light"
+            >
+              <span className="text-[14px]">
+                {n.type === 'info' ? '📋' : n.type === 'success' ? '✅' : '⚠️'}
+              </span>
+              <span className="text-[13px] flex-1">{n.message}</span>
+              <span className="text-[11px] text-muted">{n.time}</span>
             </div>
-          </DetailCard>
+          ))}
         </div>
       </div>
     </div>

@@ -88,9 +88,15 @@ const OpinionIcon = () => (
     <path d="M14 2v6h6M16 13H8M16 17H8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
 );
-const TypeAIcon = () => <div className="w-[15px] flex justify-center"><div className="w-[5px] h-[5px] rounded-full bg-amber" /></div>;
-const TypeBIcon = () => <div className="w-[15px] flex justify-center"><div className="w-[5px] h-[5px] rounded-full bg-red" /></div>;
-const TypeCIcon = () => <div className="w-[15px] flex justify-center"><div className="w-[5px] h-[5px] rounded-full bg-green" /></div>;
+const TypeAIcon = () => <div className="w-[15px] flex justify-center"><div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: '#C9252C' }} /></div>;
+const TypeBIcon = () => <div className="w-[15px] flex justify-center"><div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: '#64748B' }} /></div>;
+const TypeCIcon = () => <div className="w-[15px] flex justify-center"><div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: '#00854A' }} /></div>;
+const FieldCheckIcon = () => (
+  <svg className="w-[15px] h-[15px] shrink-0" viewBox="0 0 24 24" fill="none">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.6" />
+    <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="1.6" />
+  </svg>
+);
 const ChevronLeftIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
     <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -163,17 +169,18 @@ function SidebarContent({
           </div>
         )}
         {collapsed && <div className="my-1 border-t border-border mx-2" />}
-        <NavItem to="/claims" label="청구 목록" icon={<ClaimsIcon />} collapsed={collapsed} onClick={onClose} />
+        <NavItem to="/claims" label="접수 관리" icon={<ClaimsIcon />} collapsed={collapsed} onClick={onClose} />
         {!collapsed && (
           <>
-            <NavItem to="/type-a" label="TYPE A — 하자소송 이관" icon={<TypeAIcon />} onClick={onClose} />
+            <NavItem to="/type-a" label="TYPE A — 하자" icon={<TypeAIcon />} onClick={onClose} />
             <NavItem to="/type-b" label="TYPE B — 면책" icon={<TypeBIcon />} onClick={onClose} />
-            <NavItem to="/type-c" label="TYPE C — 지급" icon={<TypeCIcon />} onClick={onClose} />
+            <NavItem to="/type-c" label="TYPE C — 보험금" icon={<TypeCIcon />} onClick={onClose} />
           </>
         )}
-        <NavItem to="/estimation" label="적산 결과 검토" icon={<EstimationIcon />} collapsed={collapsed} onClick={onClose} />
-        <NavItem to="/approve" label="손해사정사 승인" icon={<ApproveIcon />} collapsed={collapsed} onClick={onClose} />
-        <NavItem to="/opinion" label="법률 의견서" icon={<OpinionIcon />} collapsed={collapsed} onClick={onClose} />
+        <NavItem to="/field" label="현장조사" icon={<FieldCheckIcon />} collapsed={collapsed} onClick={onClose} />
+        <NavItem to="/estimation" label="적산·산정" icon={<EstimationIcon />} collapsed={collapsed} onClick={onClose} />
+        <NavItem to="/approve" label="승인·결재" icon={<ApproveIcon />} collapsed={collapsed} onClick={onClose} />
+        <NavItem to="/opinion" label="의견서" icon={<OpinionIcon />} collapsed={collapsed} onClick={onClose} />
       </div>
 
       {/* Footer / Toggle */}

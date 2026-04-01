@@ -1,187 +1,167 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  DetailCard,
-  RadioOption,
-  Timeline,
-  Button,
-  Modal,
-  Toast,
-} from '@/components/common';
-import { typeCDetail, approveTimeline } from '@/lib/data';
-import { fetchClaimById, postApproval } from '@/lib/api';
+import { useState } from 'react';
+import clsx from 'clsx';
+import { approveItems } from '@/data/mockData';
+import { DataTable, Button, DetailCard } from '@/components/common';
+import type { Column } from '@/components/common';
+import type { ApproveItem } from '@/types/documents';
 
-const CLAIM_ID = 'CLM-0244';
+const statusColorMap: Record<string, string> = {
+  '대기': '#D97706',
+  '승인': '#059669',
+  '반려': '#DC2626',
+  '보완요청': '#4F46E5',
+};
+
+type TabType = 'pending' | 'history';
 
 export default function ApprovePage() {
-  const navigate = useNavigate();
-  const [selectedOption, setSelectedOption] = useState(0);
-  const [comment, setComment] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [approving, setApproving] = useState(false);
+  const [tab, setTab] = useState<TabType>('pending');
+  const [selected, setSelected] = useState<ApproveItem | null>(null);
 
-  // Use typeCDetail for estimation result (CLM-0247 detail)
-  const est = typeCDetail.estimationResult;
+  const pending = approveItems.filter((a) => a.status === '대기');
+  const history = approveItems.filter((a) => a.status !== '대기');
+  const currentData = tab === 'pending' ? pending : history;
 
-  const radioOptions = [
-    'AI 산출액 그대로 승인 (607,850원)',
-    '금액 수정 후 승인',
-    '재분류 요청 (AI 재심사)',
+  const columns: Column<ApproveItem>[] = [
+    {
+      key: 'claimId',
+      label: '접수번호',
+      width: '100px',
+      render: (row) => <span className="font-semibold text-primary">{row.claimId}</span>,
+    },
+    {
+      key: 'complex',
+      label: '단지',
+      render: (row) => `${row.complex} ${row.dongHo}`,
+    },
+    { key: 'accidentType', label: '유형', width: '110px' },
+    {
+      key: 'finalAmount',
+      label: '최종 산정액',
+      width: '130px',
+      align: 'right',
+      render: (row) => <span className="font-bold">{row.finalAmount.toLocaleString()}원</span>,
+    },
+    {
+      key: 'requestDate',
+      label: '요청일',
+      width: '100px',
+      render: (row) => row.requestDate.slice(5).replace('-', '.'),
+    },
+    {
+      key: 'status',
+      label: '상태',
+      width: '90px',
+      render: (row) => {
+        const color = statusColorMap[row.status] || '#64748B';
+        return (
+          <span className="text-[11px] font-semibold px-2 py-[2px] rounded-badge inline-block" style={{ backgroundColor: color + '15', color }}>
+            {row.status}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'action',
+      label: '액션',
+      width: '220px',
+      render: (row) => {
+        if (row.status !== '대기') {
+          return <span className="text-[11px] text-secondary">{row.approveDate} · {row.approver}</span>;
+        }
+        return (
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="green" size="sm">승인</Button>
+            <Button variant="danger" size="sm">반려</Button>
+            <Button variant="secondary" size="sm">보완요청</Button>
+          </div>
+        );
+      },
+    },
   ];
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchClaimById(CLAIM_ID)
-      .then(() => {
-        // Claim confirmed from API
-      })
-      .catch(() => {
-        // Fallback: use mock data
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  const handleApprove = async () => {
-    setApproving(true);
-    const decisionMap = ['approve', 'approve_modified', 'reclassify'];
-    const decision = decisionMap[selectedOption] ?? 'approve';
-    const approvedAmount = selectedOption === 0 ? est.totalAmount : undefined;
-
-    try {
-      await postApproval(CLAIM_ID, {
-        decision,
-        approvedAmount,
-        comment: comment.trim() || undefined,
-      });
-    } catch {
-      // Fallback: proceed anyway (mock mode)
-    } finally {
-      setApproving(false);
-      setModalOpen(false);
-      setToastVisible(true);
-      setTimeout(() => navigate('/claims'), 2000);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="animate-pulse">
-        <div className="h-6 bg-border-light rounded w-1/3 mb-4" />
-        <div className="h-4 bg-border-light rounded w-1/2 mb-8" />
-        <div className="grid grid-cols-2 gap-[14px]">
-          <div className="h-64 bg-border-light rounded-card" />
-          <div className="h-64 bg-border-light rounded-card" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-[18px]">
-        <div className="text-[18px] font-bold tracking-[-0.4px] mb-[3px]">손해사정사 최종 검토</div>
-        <div className="text-[13px] text-secondary">CLM-2026-0247 / 헬리오시티 102동 1204호</div>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-[20px] font-bold tracking-[-0.3px]">승인·결재</h1>
+        <p className="text-[13px] text-secondary mt-1">보험금 최종 승인을 처리합니다</p>
       </div>
 
-      {/* 2-column */}
-      <div className="grid grid-cols-2 gap-[14px]">
-        {/* Left */}
-        <div className="flex flex-col gap-[14px]">
-          {/* AI Result */}
-          <DetailCard title="AI 산출 결과 최종 확인" bodyClassName="text-center py-5 px-[18px]">
-            <div className="text-[38px] font-bold text-txt tracking-[-1px]">
-              {est.totalAmount.toLocaleString()}원
-            </div>
-            <div className="text-[12px] text-secondary mt-1">
-              업체 견적 대비 -{est.savingsPercent}% / 산출 {est.calculationTime}
-            </div>
-          </DetailCard>
-
-          {/* Options */}
-          <DetailCard title="처리 옵션">
-            {radioOptions.map((label, idx) => (
-              <RadioOption
-                key={idx}
-                label={label}
-                selected={selectedOption === idx}
-                onChange={() => setSelectedOption(idx)}
-              />
-            ))}
-            <div className="mt-3">
-              <div className="text-[12px] font-semibold text-secondary mb-[6px]">검토 의견 (선택)</div>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="AI 산출 결과에 대한 검토 의견을 입력하세요..."
-                className="w-full border border-border rounded-btn py-[9px] px-[11px] text-[13px] font-sans resize-y min-h-[72px] text-txt outline-none bg-card transition-colors focus:border-primary"
-              />
-            </div>
-          </DetailCard>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-card rounded-card border border-border p-4 text-center">
+          <div className="text-[22px] font-bold text-amber">{pending.length}</div>
+          <div className="text-[11px] text-secondary mt-1">승인 대기</div>
         </div>
+        <div className="bg-card rounded-card border border-border p-4 text-center">
+          <div className="text-[22px] font-bold text-green">{approveItems.filter((a) => a.status === '승인').length}</div>
+          <div className="text-[11px] text-secondary mt-1">승인 완료</div>
+        </div>
+        <div className="bg-card rounded-card border border-border p-4 text-center">
+          <div className="text-[22px] font-bold text-primary">{pending.reduce((sum, a) => sum + a.finalAmount, 0).toLocaleString()}원</div>
+          <div className="text-[11px] text-secondary mt-1">대기 합계</div>
+        </div>
+      </div>
 
-        {/* Right */}
-        <div className="flex flex-col gap-[14px]">
-          {/* Legal Opinion */}
-          <DetailCard title="법률 의견서 첨부" bodyClassName="px-[18px] py-3">
-            <div className="bg-primary-light border border-[#c7d2fe] rounded-btn py-[11px] px-[13px] flex gap-[10px] items-start">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-[1px]">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#4F46E5" strokeWidth="1.6" />
-                <path d="M14 2v6h6M16 13H8M16 17H8" stroke="#4F46E5" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-              <div>
-                <div className="font-semibold text-[13px] text-primary">보험업법 제185조 기반 손해사정 의견서</div>
-                <div className="text-[11px] text-secondary mt-[2px]">APT Insurance 법무팀 첨부 완료 — 2026-03-14 09:45</div>
+      <div className="flex gap-1 bg-border-light rounded-block p-1 w-fit">
+        <button
+          onClick={() => setTab('pending')}
+          className={clsx(
+            'px-4 py-[6px] text-[12px] font-medium rounded-btn transition-all cursor-pointer',
+            tab === 'pending' ? 'bg-white shadow-subtle text-primary' : 'text-secondary hover:text-txt',
+          )}
+        >
+          승인 대기 ({pending.length})
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className={clsx(
+            'px-4 py-[6px] text-[12px] font-medium rounded-btn transition-all cursor-pointer',
+            tab === 'history' ? 'bg-white shadow-subtle text-primary' : 'text-secondary hover:text-txt',
+          )}
+        >
+          승인 이력 ({history.length})
+        </button>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={currentData}
+        onRowClick={(row) => setSelected(row)}
+        footer={<div className="px-4 py-3 text-[12px] text-secondary border-t border-border">{currentData.length}건</div>}
+      />
+
+      {selected && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setSelected(null)} />
+          <div className="fixed top-0 right-0 bottom-0 w-[400px] bg-card border-l border-border z-50 overflow-y-auto shadow-lg">
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[16px] font-bold">{selected.claimId}</h2>
+                <button onClick={() => setSelected(null)} className="text-secondary hover:text-txt text-[18px] cursor-pointer">✕</button>
               </div>
+              <DetailCard title="승인 정보">
+                <div className="space-y-2 text-[13px]">
+                  <div className="flex justify-between"><span className="text-secondary">단지</span><span className="font-medium">{selected.complex} {selected.dongHo}</span></div>
+                  <div className="flex justify-between"><span className="text-secondary">유형</span><span className="font-medium">{selected.accidentType}</span></div>
+                  <div className="flex justify-between"><span className="text-secondary">최종 산정액</span><span className="font-bold text-green">{selected.finalAmount.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-secondary">요청일</span><span className="font-medium">{selected.requestDate}</span></div>
+                  {selected.approver && (
+                    <div className="flex justify-between"><span className="text-secondary">승인자</span><span className="font-medium">{selected.approver}</span></div>
+                  )}
+                </div>
+              </DetailCard>
+              {selected.status === '대기' && (
+                <div className="flex gap-2">
+                  <Button variant="green" size="sm">승인</Button>
+                  <Button variant="danger" size="sm">반려</Button>
+                  <Button variant="primary" size="sm">보완요청</Button>
+                </div>
+              )}
+              <Button variant="secondary" size="sm" onClick={() => setSelected(null)}>닫기</Button>
             </div>
-          </DetailCard>
-
-          {/* Timeline */}
-          <DetailCard title="처리 이력" bodyClassName="px-[18px] py-3">
-            <Timeline items={approveTimeline} />
-          </DetailCard>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              variant="green"
-              fullWidth
-              className="py-[11px] text-[13px] justify-center"
-              onClick={() => !approving && setModalOpen(true)}
-            >
-              최종 승인 및 지급 처리
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => !approving && setModalOpen(true)}
-            >
-              반려
-            </Button>
           </div>
-        </div>
-      </div>
-
-      {/* Modal */}
-      <Modal
-        open={modalOpen}
-        title="지급 확정 완료"
-        description={`607,850원 지급이 확정되었습니다. 청구인에게 SMS 알림이 발송되며 영업일 3일 이내 입금됩니다.\n\n총 처리 시간: 22분`}
-        confirmLabel="확인"
-        cancelLabel="취소"
-        onConfirm={handleApprove}
-        onCancel={() => setModalOpen(false)}
-      />
-
-      <Toast
-        message="최종 승인이 완료되었습니다"
-        visible={toastVisible}
-        onHide={() => setToastVisible(false)}
-      />
+        </>
+      )}
     </div>
   );
 }

@@ -2,8 +2,33 @@
  * Estimation domain types
  */
 
+export interface EstimationItemRow {
+  name: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  subtotal: number;
+  standardLabel: string;
+}
+
 export interface EstimationItem {
-  id: string | number;
+  id: number;
+  claimId: string;
+  complex: string;
+  dongHo: string;
+  accidentType: string;
+  items: EstimationItemRow[];
+  aiTotal: number;
+  adjustedTotal: number | null;
+  confirmed: boolean;
+  deductible: number;
+  insuranceAmount: number | null;
+}
+
+// Legacy compat
+export interface EstimationRow {
+  id: number;
   name: string;
   description: string;
   quantity: string;
@@ -11,7 +36,7 @@ export interface EstimationItem {
   standardLabel: string;
   standardVariant: 'primary' | 'green';
   subtotal: number;
-  isSelected: boolean;
+  checked: boolean;
 }
 
 export interface EstimationDetail {
@@ -24,18 +49,5 @@ export interface EstimationDetail {
   depreciation?: number;
   deductible?: number;
   indirectRate?: number;
-  items: EstimationItem[];
-}
-
-// Local UI shape (checked vs isSelected)
-export interface EstimationRow {
-  id: number;
-  name: string;
-  description: string;
-  quantity: string;
-  unit: string;
-  standardLabel: string;
-  standardVariant: 'primary' | 'green';
-  subtotal: number;
-  checked: boolean;
+  items: EstimationRow[];
 }

@@ -1,413 +1,313 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import {
-  Badge,
-  StatusPill,
-  Button,
-  KVRow,
-} from '@/components/common';
-import type { Claim, PreviewData } from '@/lib/types';
-import { claims, claimTabCounts } from '@/lib/data';
-import { fetchClaims } from '@/lib/api';
-import type { ClaimListItem } from '@/lib/api';
+import { DataTable, StatusPill, Button } from '@/components/common';
+import type { Column } from '@/components/common';
+import { claims } from '@/data/mockData';
+import type { Claim } from '@/types/claims';
 
-type TabKey = 'all' | 'a' | 'b' | 'c' | 'wait' | 'done';
-
-const typeToRoutePrefix: Record<string, string> = {
-  A: '/type-a',
-  B: '/type-b',
-  C: '/type-c',
-};
-
-const badgeVariantMap: Record<string, 'ba' | 'bb' | 'bc'> = {
-  A: 'ba',
-  B: 'bb',
-  C: 'bc',
+const typeColorMap: Record<string, string> = {
+  A: '#C9252C',
+  B: '#64748B',
+  C: '#00854A',
 };
 
 const statusVariantMap: Record<string, 'done' | 'sent' | 'wait' | 'transfer'> = {
-  done: 'done',
-  sent: 'sent',
-  wait: 'wait',
-  transfer: 'transfer',
-  paid: 'done',
+  '접수': 'wait',
+  '분류대기': 'wait',
+  '현장조사중': 'transfer',
+  '산정중': 'sent',
+  '산정완료': 'done',
+  '심사중': 'sent',
+  '승인대기': 'wait',
+  '승인완료': 'done',
+  '지급완료': 'done',
+  '면책통보': 'sent',
+  '반려': 'wait',
+  '완료': 'done',
 };
 
-const borderColorMap: Record<string, string> = {
-  A: 'border-l-amber',
-  B: 'border-l-red',
-  C: 'border-l-green',
-};
-
-// Map API ClaimListItem → local Claim shape
-function mapApiClaim(item: ClaimListItem): Claim {
-  return {
-    id: item.id,
-    complex: item.complexName,
-    description: item.description,
-    date: item.claimedAt?.slice(0, 10) ?? '',
-    type: item.type,
-    confidence: item.aiConfidence,
-    status: item.status as Claim['status'],
-    statusLabel: item.status,
-    amount: item.amount,
-    actionLabel: '상세',
-    actionVariant: 'primary',
-    actionRoute: `${typeToRoutePrefix[item.type] ?? '/claims'}/${item.id}`,
-  };
-}
-
-type SortKey = 'date' | 'confidence' | 'status';
-
-function getPreviewData(claim: Claim): PreviewData {
-  return {
-    badge: `TYPE ${claim.type}`,
-    badgeVariant: badgeVariantMap[claim.type],
-    title: claim.complex,
-    claimId: claim.id,
-    date: claim.date,
-    kvRows: [
-      { label: '피해 내용', value: claim.description },
-      { label: '접수일', value: claim.date },
-      { label: '신뢰도', value: `${(claim.confidence * 100).toFixed(1)}%` },
-      { label: '상태', value: claim.statusLabel },
-      ...(claim.amount ? [{ label: '금액', value: `${claim.amount.toLocaleString()}원` }] : []),
-    ],
-    actions: [
-      {
-        label: claim.actionLabel ?? '상세',
-        variant: (claim.actionVariant ?? 'primary') as 'primary' | 'secondary' | 'green',
-        route: claim.actionRoute,
-      },
-    ],
-  };
-}
+type SourceFilter = '전체' | '입주민' | '관리사무소';
+type TypeFilter = '전체' | '미분류' | 'A' | 'B' | 'C';
+type StatusFilter = '전체' | '접수' | '분류대기' | '현장조사' | '산정' | '승인대기' | '완료';
 
 export default function ClaimsPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabKey>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('전체');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('전체');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체');
+  const [search, setSearch] = useState('');
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
 
-  // API state
-  const [apiClaims, setApiClaims] = useState<Claim[] | null>(null);
-  const [totalCount, setTotalCount] = useState<{ all: number; a: number; b: number; c: number; wait: number } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const filtered = useMemo(() => {
+    return claims.filter((c) => {
+      if (sourceFilter !== '전체' && c.source !== sourceFilter) return false;
+      if (typeFilter === '미분류' && c.type !== null) return false;
+      if (typeFilter === 'A' && c.type !== 'A') return false;
+      if (typeFilter === 'B' && c.type !== 'B') return false;
+      if (typeFilter === 'C' && c.type !== 'C') return false;
+      if (statusFilter === '현장조사' && c.status !== '현장조사중') return false;
+      if (statusFilter === '산정' && !['산정중', '산정완료'].includes(c.status)) return false;
+      if (statusFilter === '접수' && c.status !== '접수') return false;
+      if (statusFilter === '분류대기' && c.status !== '분류대기') return false;
+      if (statusFilter === '승인대기' && c.status !== '승인대기') return false;
+      if (statusFilter === '완료' && !['완료', '지급완료'].includes(c.status)) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          !c.id.toLowerCase().includes(q) &&
+          !c.complex.toLowerCase().includes(q) &&
+          !`${c.dong}동 ${c.ho}호`.toLowerCase().includes(q)
+        )
+          return false;
+      }
+      return true;
+    });
+  }, [sourceFilter, typeFilter, statusFilter, search]);
 
-  const loadClaims = useCallback(() => {
-    setLoading(true);
-    const typeParam = activeTab === 'a' ? 'A' : activeTab === 'b' ? 'B' : activeTab === 'c' ? 'C' : undefined;
-    const statusParam = activeTab === 'wait' ? 'wait' : activeTab === 'done' ? 'done' : undefined;
-
-    fetchClaims({
-      type: typeParam,
-      status: statusParam,
-      search: searchQuery.trim() || undefined,
-      limit: 100,
-    })
-      .then((data) => {
-        const mapped = data.items.map(mapApiClaim);
-        // Apply client-side sort since API may not support sorting
-        if (sortKey === 'date') mapped.sort((a, b) => b.date.localeCompare(a.date));
-        else if (sortKey === 'confidence') mapped.sort((a, b) => b.confidence - a.confidence);
-        else if (sortKey === 'status') mapped.sort((a, b) => a.statusLabel.localeCompare(b.statusLabel));
-        setApiClaims(mapped);
-        setTotalCount({
-          all: data.total ?? mapped.length,
-          a: mapped.filter((c) => c.type === 'A').length,
-          b: mapped.filter((c) => c.type === 'B').length,
-          c: mapped.filter((c) => c.type === 'C').length,
-          wait: mapped.filter((c) => c.status === 'wait').length,
-        });
-      })
-      .catch(() => {
-        // Fallback to mock data
-        setApiClaims(null);
-        setTotalCount(null);
-      })
-      .finally(() => setLoading(false));
-  }, [activeTab, searchQuery, sortKey]);
-
-  useEffect(() => {
-    loadClaims();
-  }, [loadClaims]);
-
-  // Use API data if available, otherwise fall back to filtered mock data
-  const displayClaims = useMemo(() => {
-    if (apiClaims !== null) return apiClaims;
-
-    // Fallback: use mock data with client-side filtering
-    let result = [...claims];
-    if (activeTab === 'a') result = result.filter((c) => c.type === 'A');
-    else if (activeTab === 'b') result = result.filter((c) => c.type === 'B');
-    else if (activeTab === 'c') result = result.filter((c) => c.type === 'C');
-    else if (activeTab === 'wait') result = result.filter((c) => c.status === 'wait');
-    else if (activeTab === 'done') result = result.filter((c) => c.dimmed);
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.complex.toLowerCase().includes(q) ||
-          c.id.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q),
-      );
-    }
-
-    if (sortKey === 'date') result.sort((a, b) => b.date.localeCompare(a.date));
-    else if (sortKey === 'confidence') result.sort((a, b) => b.confidence - a.confidence);
-    else if (sortKey === 'status') result.sort((a, b) => a.statusLabel.localeCompare(b.statusLabel));
-
-    return result;
-  }, [apiClaims, activeTab, searchQuery, sortKey]);
-
-  const tabCounts = totalCount ?? claimTabCounts;
-
-  const tabs: { key: TabKey; label: string; count?: number; countStyle?: string }[] = [
-    { key: 'all', label: '전체', count: tabCounts.all, countStyle: 'bg-border-light text-secondary' },
-    { key: 'a', label: 'TYPE A', count: tabCounts.a, countStyle: 'bg-amber-light text-amber' },
-    { key: 'b', label: 'TYPE B', count: tabCounts.b, countStyle: 'bg-red-light text-red' },
-    { key: 'c', label: 'TYPE C', count: tabCounts.c, countStyle: 'bg-green-light text-green' },
-    { key: 'wait', label: '승인 대기', count: tabCounts.wait, countStyle: 'bg-red-light text-red' },
-    { key: 'done', label: '완료' },
+  const columns: Column<Claim>[] = [
+    {
+      key: 'id',
+      label: '접수번호',
+      width: '100px',
+      render: (row) => <span className="font-semibold text-primary">{row.id}</span>,
+    },
+    {
+      key: 'source',
+      label: '소스',
+      width: '90px',
+      render: (row) => (
+        <span className="text-[12px]">
+          {row.source === '입주민' ? '🏠 입주민' : '🏢 관리소'}
+        </span>
+      ),
+    },
+    {
+      key: 'dongHo',
+      label: '동/호',
+      width: '100px',
+      render: (row) => `${row.dong}동 ${row.ho}호`,
+    },
+    { key: 'accidentType', label: '사고유형', width: '100px' },
+    {
+      key: 'type',
+      label: 'TYPE',
+      width: '70px',
+      align: 'center',
+      render: (row) =>
+        row.type ? (
+          <span
+            className="text-[11px] font-bold px-2 py-[2px] rounded-badge"
+            style={{
+              backgroundColor: typeColorMap[row.type] + '15',
+              color: typeColorMap[row.type],
+            }}
+          >
+            TYPE {row.type}
+          </span>
+        ) : (
+          <span className="text-muted text-[11px]">미분류</span>
+        ),
+    },
+    {
+      key: 'status',
+      label: '상태',
+      width: '90px',
+      render: (row) => (
+        <StatusPill variant={statusVariantMap[row.status] || 'wait'}>
+          {row.status}
+        </StatusPill>
+      ),
+    },
+    {
+      key: 'aiAmount',
+      label: 'AI산출액',
+      width: '110px',
+      align: 'right',
+      render: (row) =>
+        row.aiAmount ? (
+          <span className="font-medium">{row.aiAmount.toLocaleString()}원</span>
+        ) : (
+          <span className="text-muted">—</span>
+        ),
+    },
+    {
+      key: 'date',
+      label: '접수일',
+      width: '90px',
+      render: (row) => row.date.slice(5).replace('-', '.'),
+    },
+    {
+      key: 'action',
+      label: '액션',
+      width: '120px',
+      render: (row) => {
+        if (row.type === null) {
+          return (
+            <select
+              className="text-[11px] border border-border rounded-btn px-2 py-1 bg-white cursor-pointer"
+              defaultValue=""
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => e.stopPropagation()}
+            >
+              <option value="" disabled>TYPE 분류</option>
+              <option value="A">TYPE A</option>
+              <option value="B">TYPE B</option>
+              <option value="C">TYPE C</option>
+            </select>
+          );
+        }
+        if (row.status === '현장조사중' || row.status === '접수') {
+          return (
+            <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/field'); }}>
+              현장조사 배정
+            </Button>
+          );
+        }
+        if (row.status === '산정완료') {
+          return (
+            <Button variant="green" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/approve'); }}>
+              승인 요청
+            </Button>
+          );
+        }
+        return null;
+      },
+    },
   ];
 
-  const preview = selectedClaim ? getPreviewData(selectedClaim) : null;
-  const closePreview = () => setSelectedClaim(null);
-
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-[14px] gap-3">
-        <div>
-          <div className="text-[18px] font-bold tracking-[-0.4px] mb-[2px]">청구 목록</div>
-          <div className="text-[13px] text-secondary">
-            이번 달 {tabCounts.all}건 · 승인 대기 <span className="text-red font-bold">{tabCounts.wait}건</span>
-          </div>
-        </div>
-        <div className="flex gap-2 items-center">
-          <div className="relative">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="absolute left-[10px] top-1/2 -translate-y-1/2 text-secondary">
-              <circle cx="11" cy="11" r="7" stroke="#94A3B8" strokeWidth="1.8" />
-              <path d="M20 20l-3-3" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-            <input
-              type="text"
-              placeholder="단지명·청구번호·내용 검색"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="py-[7px] px-3 pl-8 border border-border rounded-btn text-[13px] font-sans w-[220px] outline-none bg-card text-txt transition-colors focus:border-primary"
-            />
-          </div>
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="py-[7px] px-[10px] border border-border rounded-btn text-[12px] font-sans bg-card text-txt outline-none cursor-pointer"
-          >
-            <option value="date">접수일 최신순</option>
-            <option value="confidence">신뢰도 높은순</option>
-            <option value="status">상태별</option>
-          </select>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-[20px] font-bold tracking-[-0.3px]">접수 관리</h1>
+        <p className="text-[13px] text-secondary mt-1">전체 접수 목록을 조회하고 관리합니다</p>
       </div>
 
-      {/* 2-column layout */}
-      <div className="flex gap-[14px] h-[calc(100vh-160px)]">
-        {/* Left: List */}
-        <div className="flex-1 min-w-0 flex flex-col bg-card rounded-card border border-border overflow-hidden">
-          {/* Tabs */}
-          <div className="flex items-center justify-between px-4 border-b border-border shrink-0">
-            <div className="flex gap-0" style={{ borderBottom: 'none' }}>
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={clsx(
-                    'py-[9px] px-[14px] text-[12px] font-semibold cursor-pointer transition-all border-b-2 -mb-px whitespace-nowrap tracking-[-0.1px] bg-transparent border-none',
-                    activeTab === tab.key
-                      ? 'text-primary border-b-primary'
-                      : 'text-secondary border-b-transparent',
-                  )}
-                  style={{
-                    borderBottom: `2px solid ${activeTab === tab.key ? '#4F46E5' : 'transparent'}`,
-                    marginBottom: '-1px',
-                  }}
-                >
-                  {tab.label}
-                  {tab.count !== undefined && (
-                    <span
-                      className={clsx(
-                        'text-[10px] py-[1px] px-[6px] rounded-[10px] ml-[3px]',
-                        tab.countStyle,
-                      )}
-                    >
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+      {/* Filters */}
+      <div className="bg-card rounded-card border border-border p-4 flex flex-wrap gap-3 items-center">
+        <FilterGroup
+          label="소스"
+          options={['전체', '입주민', '관리사무소'] as const}
+          value={sourceFilter}
+          onChange={setSourceFilter}
+        />
+        <div className="w-px h-6 bg-border" />
+        <FilterGroup
+          label="TYPE"
+          options={['전체', '미분류', 'A', 'B', 'C'] as const}
+          value={typeFilter}
+          onChange={setTypeFilter}
+        />
+        <div className="w-px h-6 bg-border" />
+        <FilterGroup
+          label="상태"
+          options={['전체', '접수', '분류대기', '현장조사', '산정', '승인대기', '완료'] as const}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
+        <div className="flex-1" />
+        <input
+          type="text"
+          placeholder="접수번호, 단지명, 동호수 검색"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="text-[12px] border border-border rounded-input px-3 py-[6px] w-[220px] outline-none focus:border-primary focus:shadow-ring-primary transition-all"
+        />
+      </div>
+
+      {/* Table */}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        onRowClick={(row) => setSelectedClaim(row)}
+        footer={
+          <div className="px-4 py-3 text-[12px] text-secondary border-t border-border">
+            총 {filtered.length}건
+          </div>
+        }
+      />
+
+      {/* Detail Slide Panel */}
+      {selectedClaim && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setSelectedClaim(null)} />
+          <div className="fixed top-0 right-0 bottom-0 w-[400px] bg-card border-l border-border z-50 overflow-y-auto shadow-lg">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[16px] font-bold">{selectedClaim.id}</h2>
+                <button onClick={() => setSelectedClaim(null)} className="text-secondary hover:text-txt text-[18px] cursor-pointer">✕</button>
+              </div>
+              <div className="space-y-3">
+                <InfoRow label="단지" value={selectedClaim.complex} />
+                <InfoRow label="동/호" value={`${selectedClaim.dong}동 ${selectedClaim.ho}호`} />
+                <InfoRow label="소스" value={selectedClaim.source} />
+                <InfoRow label="사고유형" value={selectedClaim.accidentType} />
+                <InfoRow label="TYPE" value={selectedClaim.type ? `TYPE ${selectedClaim.type}` : '미분류'} />
+                <InfoRow label="상태" value={selectedClaim.status} />
+                <InfoRow label="접수일" value={selectedClaim.date} />
+                <InfoRow label="설명" value={selectedClaim.description} />
+                {selectedClaim.aiAmount != null && (
+                  <InfoRow label="AI 산출액" value={`${selectedClaim.aiAmount.toLocaleString()}원`} />
+                )}
+                {selectedClaim.finalAmount != null && (
+                  <InfoRow label="최종 금액" value={`${selectedClaim.finalAmount.toLocaleString()}원`} />
+                )}
+                {selectedClaim.exemptionReason && (
+                  <InfoRow label="면책 사유" value={selectedClaim.exemptionReason} />
+                )}
+                {selectedClaim.contractor && (
+                  <InfoRow label="시공사" value={selectedClaim.contractor} />
+                )}
+              </div>
+              <div className="mt-5 flex gap-2">
+                {selectedClaim.type === null && <Button variant="primary" size="sm">TYPE 분류</Button>}
+                <Button variant="secondary" size="sm" onClick={() => setSelectedClaim(null)}>닫기</Button>
+              </div>
             </div>
           </div>
+        </>
+      )}
+    </div>
+  );
+}
 
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[90px_1fr_80px_80px_120px_90px] px-4 py-2 bg-border-light text-[10px] font-bold text-secondary uppercase tracking-[0.4px] shrink-0 border-b border-border">
-            <span>청구번호</span>
-            <span>단지·내용</span>
-            <span>접수일</span>
-            <span>신뢰도</span>
-            <span>상태</span>
-            <span className="text-right">액션</span>
-          </div>
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className="text-[12px] text-secondary w-[80px] shrink-0">{label}</span>
+      <span className="text-[13px] font-medium">{value}</span>
+    </div>
+  );
+}
 
-          {/* Rows */}
-          <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="flex flex-col gap-0">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="animate-pulse border-b border-border px-4 py-[11px] flex gap-4 items-center">
-                    <div className="h-3 w-20 bg-border-light rounded shrink-0" />
-                    <div className="flex-1">
-                      <div className="h-3 bg-border-light rounded w-1/2 mb-2" />
-                      <div className="h-2 bg-border-light rounded w-2/3" />
-                    </div>
-                    <div className="h-3 w-12 bg-border-light rounded hidden md:block" />
-                    <div className="h-3 w-12 bg-border-light rounded hidden md:block" />
-                    <div className="h-5 w-16 bg-border-light rounded hidden md:block" />
-                    <div className="h-6 w-14 bg-border-light rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : displayClaims.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-secondary py-12">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="mb-[10px] opacity-30">
-                  <circle cx="11" cy="11" r="7" stroke="#64748B" strokeWidth="1.5" />
-                  <path d="M20 20l-3-3" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                검색 결과가 없습니다
-              </div>
-            ) : (
-              displayClaims.map((claim) => (
-                <div
-                  key={claim.id}
-                  onClick={() => setSelectedClaim(claim)}
-                  className={clsx(
-                    'grid grid-cols-[1fr_90px] md:grid-cols-[90px_1fr_80px_80px_120px_90px] py-[11px] px-4 border-b border-border cursor-pointer items-center transition-colors hover:bg-[#F8F9FF] border-l-[3px]',
-                    claim.highlighted
-                      ? 'bg-amber-light border-l-red'
-                      : claim.dimmed
-                        ? 'border-l-border'
-                        : borderColorMap[claim.type] ?? 'border-l-transparent',
-                    claim.dimmed && 'opacity-75',
-                    selectedClaim?.id === claim.id && !claim.highlighted && 'bg-primary-light',
-                  )}
-                >
-                  <div className="hidden md:block text-[11px] text-secondary">{claim.id}</div>
-                  <div>
-                    <div className="text-[13px] font-semibold">{claim.complex}</div>
-                    <div className="text-[11px] text-secondary">{claim.description}</div>
-                    <div className="md:hidden text-[11px] text-secondary mt-[2px]">{claim.id} · {claim.date.slice(5).replace('-', '/')}</div>
-                  </div>
-                  <div className="hidden md:block text-[12px] text-secondary">{claim.date.slice(5).replace('-', '/')}</div>
-                  <div className={clsx(
-                    'hidden md:block text-[13px] font-bold',
-                    claim.confidence >= 0.9 ? 'text-green' : 'text-amber',
-                  )}>
-                    {(claim.confidence * 100).toFixed(1)}%
-                  </div>
-                  <div className="hidden md:block">
-                    <StatusPill variant={statusVariantMap[claim.status] ?? 'done'}>
-                      {claim.statusLabel}
-                    </StatusPill>
-                  </div>
-                  <div className="text-right">
-                    <Button
-                      variant={claim.actionVariant ?? 'primary'}
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (claim.actionRoute) navigate(claim.actionRoute);
-                      }}
-                    >
-                      {claim.actionLabel ?? '상세'}
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer Summary */}
-          <div className="px-4 py-[9px] bg-border-light border-t border-border flex justify-between items-center shrink-0 text-[11px] text-secondary">
-            <span>전체 {tabCounts.all}건 표시 중</span>
-            <div className="flex gap-4">
-              <span>TYPE A <strong className="text-amber">{tabCounts.a}건</strong></span>
-              <span>TYPE B <strong className="text-red">{tabCounts.b}건</strong></span>
-              <span>TYPE C <strong className="text-green">{tabCounts.c}건</strong></span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Preview Panel (hidden on tablet/mobile) */}
-        <div className="hidden xl:flex w-[300px] shrink-0 bg-card rounded-card border border-border overflow-hidden flex-col transition-all">
-          {preview ? (
-            <>
-              {/* Preview Header */}
-              <div className="py-[14px] px-[16px] border-b border-border flex justify-between items-start">
-                <div>
-                  <div className="mb-[5px]">
-                    <Badge variant={preview.badgeVariant}>{preview.badge}</Badge>
-                  </div>
-                  <div className="text-[14px] font-bold tracking-[-0.3px] leading-[1.4]">{preview.title}</div>
-                  <div className="text-[11px] text-secondary mt-[2px]">{preview.claimId}</div>
-                </div>
-                <button
-                  onClick={closePreview}
-                  className="border-none bg-bg rounded-[5px] w-6 h-6 cursor-pointer flex items-center justify-center text-secondary shrink-0"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-              {/* Preview Body */}
-              <div className="py-[12px] px-[16px] flex-1 overflow-y-auto">
-                {preview.kvRows.map((kv, idx) => (
-                  <KVRow
-                    key={idx}
-                    label={kv.label}
-                    value={kv.value}
-                    valueColor={kv.valueColor}
-                    isLast={idx === preview.kvRows.length - 1}
-                  />
-                ))}
-              </div>
-              {/* Preview Actions */}
-              <div className="py-[12px] px-[16px] border-t border-border flex gap-[7px]">
-                {preview.actions.map((action, idx) => (
-                  <Button
-                    key={idx}
-                    variant={action.variant}
-                    fullWidth
-                    onClick={() => action.route && navigate(action.route)}
-                  >
-                    {action.label}
-                  </Button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center py-[32px] px-[20px] text-center text-secondary">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="opacity-25 mb-3">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="#64748B" strokeWidth="1.5" />
-              </svg>
-              <div className="text-[13px] font-semibold mb-1">청구 건을 선택하세요</div>
-              <div className="text-[12px] leading-[1.6]">행을 클릭하면<br />요약 정보가 여기 표시됩니다</div>
-            </div>
+function FilterGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly T[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-[11px] text-secondary font-semibold mr-1">{label}</span>
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={clsx(
+            'text-[11px] px-[10px] py-[4px] rounded-badge font-medium cursor-pointer transition-all',
+            value === opt
+              ? 'bg-primary text-white'
+              : 'bg-border-light text-secondary hover:bg-border hover:text-txt',
           )}
-        </div>
-      </div>
+        >
+          {opt}
+        </button>
+      ))}
     </div>
   );
 }

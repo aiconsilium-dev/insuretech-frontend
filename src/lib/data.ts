@@ -1,20 +1,13 @@
 /**
- * Re-export from new data location for backward compatibility.
- * @deprecated Import directly from @/data/mockData instead.
+ * Re-exports from new data module
  */
-
 export {
-  kpiData,
   claims,
-  dashboardRecentClaims,
+  estimationItems,
+  approveItems,
+  opinionItems,
+  notifications,
+  getDashboardStats,
+  kpiData,
   barChartData,
-  lossRateSummary,
-  typeADetail,
-  typeBDetail,
-  typeCDetail,
-  estimationRows,
-  estimationDeductions,
-  opinions,
-  approveTimeline,
-  claimTabCounts,
 } from '@/data/mockData';
