@@ -19,21 +19,23 @@ client.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor: handle errors + extract data
 client.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const original = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
     if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
       // No refresh token endpoint in this project; just logout
       useAuthStore.getState().logout();
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 /**
