@@ -1,19 +1,28 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import App from "./App";
 import { SidebarProvider } from "./contexts/SidebarContext";
-import { QueryProvider } from "./app/providers/QueryProvider";
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <SidebarProvider>
-          <App />
-        </SidebarProvider>
-      </BrowserRouter>
-    </QueryProvider>
-  </React.StrictMode>
-);
+async function enableMocking() {
+  if (import.meta.env.VITE_USE_MOCK !== "true") return;
+  const { worker } = await import("./mocks/browser");
+  return worker.start({ onUnhandledRequest: "bypass" });
+}
+
+enableMocking().then(() => {
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <HashRouter>
+          <SidebarProvider>
+            <App />
+          </SidebarProvider>
+        </HashRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+});

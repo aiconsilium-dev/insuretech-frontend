@@ -1,38 +1,75 @@
-# InsureTech Frontend
+# InsureTech Admin — 보험사/손해사정사 어드민
 
-보험 청구 심사 및 관리 시스템 프론트엔드
+> AI 기반 아파트 보험 청구 관리 데스크톱 웹 애플리케이션
 
-## 기술 스택
+## 🚀 데모
+**[https://juh-oh.github.io/insuretech-admin-test/](https://juh-oh.github.io/insuretech-admin-test/)**
 
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **Package Manager**: pnpm
+## 📋 기술 스택
 
-## 시작하기
+| 역할 | 기술 |
+|------|------|
+| UI 프레임워크 | React 19 |
+| 언어 | TypeScript 5 (strict) |
+| 번들러 | Vite 8 |
+| 라우팅 | React Router DOM v7 (HashRouter) |
+| 서버 상태 | TanStack React Query v5 |
+| 클라이언트 상태 | Zustand v5 |
+| HTTP 클라이언트 | fetch 래퍼 (apiFetch) |
+| 스타일링 | Tailwind CSS v4 |
+| 아이콘 | Lucide React |
+| API 모킹 | MSW v2 |
+| 패키지 매니저 | pnpm |
 
-```bash
-pnpm install
-pnpm dev
-```
-
-[http://localhost:3000](http://localhost:3000)에서 확인할 수 있습니다.
-
-## 프로젝트 구조
+## 📂 폴더 구조 (FSD)
 
 ```
 src/
-  app/              # Next.js App Router 페이지
-  components/
-    layout/         # 레이아웃 컴포넌트 (Sidebar, Topbar)
-    dashboard/      # 대시보드 컴포넌트
-    claims/         # 청구 관련 컴포넌트
-    type-a/         # 유형A 심사 컴포넌트
-    type-b/         # 유형B 심사 컴포넌트
-    type-c/         # 유형C 심사 컴포넌트
-    approve/        # 승인 관련 컴포넌트
-    opinion/        # 소견 관련 컴포넌트
-    common/         # 공통 컴포넌트
-  lib/              # 유틸리티, 타입, 데이터
-  styles/           # 디자인 토큰
+├── pages/              # 페이지별 Feature-Sliced Design
+│   ├── login/
+│   ├── dashboard/      (overview)
+│   ├── claims/         (claim-table)
+│   ├── type-a/         (defect-list)
+│   ├── type-b/         (denial-list)
+│   ├── type-c/         (estimation-detail)
+│   ├── field-check/    (check-list)
+│   ├── estimation/     (pricing)
+│   ├── approve/        (approval-list)
+│   └── opinion/        (opinion-list)
+├── components/         # 공통 컴포넌트
+├── hooks/              # 커스텀 훅
+├── stores/             # Zustand 스토어
+├── types/              # 도메인 타입
+├── lib/                # API 클라이언트, 쿼리키, 타입
+├── config/             # 설정
+├── contexts/           # React Context
+└── mocks/              # MSW 핸들러 + 목업 데이터
 ```
+
+## 🛠 개발
+
+```bash
+# 의존성 설치
+pnpm install
+
+# 개발 서버
+pnpm dev
+
+# 프로덕션 빌드
+pnpm build
+
+# 빌드 미리보기
+pnpm preview
+```
+
+## 📄 환경 변수
+
+`.env.example` 참고:
+```env
+VITE_API_BASE_URL=https://api.example.com
+VITE_USE_MOCK=true
+```
+
+## 📖 개발 가이드
+
+자세한 코딩 규칙은 [CLAUDE.md](./CLAUDE.md)를 참고하세요.
